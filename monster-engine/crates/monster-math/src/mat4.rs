@@ -164,6 +164,21 @@ impl Mat4 {
         m
     }
 
+    /// Right-handed look-at view matrix (OpenGL convention: camera looks
+    /// down its -Z axis; world +Y is up for 3D).
+    pub fn look_at(eye: Vec3, center: Vec3, up: Vec3) -> Mat4 {
+        let f = (center - eye).normalize(); // forward
+        let up_n = up.normalize();
+        let s = f.cross(up_n).normalize(); // right
+        let u = s.cross(f); // camera up
+        let mut m = Mat4::identity();
+        m.cols[0] = Vec4::new(s.x, u.x, -f.x, 0.0);
+        m.cols[1] = Vec4::new(s.y, u.y, -f.y, 0.0);
+        m.cols[2] = Vec4::new(s.z, u.z, -f.z, 0.0);
+        m.cols[3] = Vec4::new(-s.dot(eye), -u.dot(eye), f.dot(eye), 1.0);
+        m
+    }
+
     /// Camera view matrix for 2D: maps world space to clip space so that a
     /// world point at `position` lands on the viewport center (clip 0,0).
     ///
@@ -225,6 +240,34 @@ mod tests {
         let v = m.mul_vec4(Vec4::new(1.0, 0.0, 0.0, 1.0));
         assert!(crate::approx_eq(v.x, 0.0, EPS));
         assert!(crate::approx_eq(v.y, 1.0, EPS));
+    }
+
+    #[test]
+    fn look_at_maps_camera_axis_to_view_axis() {
+        // camera at origin looking down -Z (standard GL pose), up +Y:
+        // a point straight ahead stays on the -Z view axis.
+        let eye = Vec3::new(0.0, 0.0, 0.0);
+        let center = Vec3::new(0.0, 0.0, -10.0);
+        let m = Mat4::look_at(eye, center, Vec3::new(0.0, 1.0, 0.0));
+        let ahead = m.mul_vec4(Vec4::new(0.0, 0.0, -5.0, 1.0));
+        assert!(crate::approx_eq(ahead.x, 0.0, EPS));
+        assert!(crate::approx_eq(ahead.y, 0.0, EPS));
+        assert!(crate::approx_eq(ahead.z, -5.0, EPS));
+
+        // a point to the camera's right (+X world when facing -Z) is +X in view
+        let right = m.mul_vec4(Vec4::new(3.0, 0.0, -5.0, 1.0));
+        assert!(crate::approx_eq(right.x, 3.0, EPS));
+
+        // camera offset: world point at the eye maps to view origin
+        let m2 = Mat4::look_at(
+            Vec3::new(5.0, 3.0, 8.0),
+            Vec3::new(5.0, 3.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
+        );
+        let at_eye = m2.mul_vec4(Vec4::new(5.0, 3.0, 8.0, 1.0));
+        assert!(crate::approx_eq(at_eye.x, 0.0, EPS));
+        assert!(crate::approx_eq(at_eye.y, 0.0, EPS));
+        assert!(crate::approx_eq(at_eye.z, 0.0, EPS));
     }
 
     #[test]

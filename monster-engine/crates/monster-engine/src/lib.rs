@@ -30,6 +30,7 @@
 //! ```
 
 pub mod engine;
+pub mod gl3d;
 pub mod physics_bridge;
 
 pub use engine::{
@@ -47,6 +48,7 @@ pub mod prelude {
     pub use monster_core::audio::{AudioBackend, AudioClip};
     pub use monster_core::events::{EngineEvent, EventBus};
     pub use monster_core::graphics::{Camera2D, DrawOptions, PresentTarget, Renderer, Texture};
+    pub use monster_core::graphics::{Camera3D, Renderer3D};
     pub use monster_core::handle::Handle;
     pub use monster_core::input::{InputState, KeyCode, MouseButton};
     pub use monster_core::log::{set_max_level, Level};
@@ -67,6 +69,7 @@ pub mod prelude {
         Engine, EngineBuilder, EngineConfig, EngineRunResult, GameApp, InitContext, RenderContext,
         UpdateContext,
     };
+    pub use crate::gl3d::Gl3DRenderer;
     pub use crate::physics_attach;
     pub use crate::physics_bridge::PhysicsLink;
 }

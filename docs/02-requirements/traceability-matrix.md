@@ -97,6 +97,14 @@ Truy vết hai chiều: requirement → module hiện thực → test kiểm ch�
 | --- | --- | --- | --- |
 | FR-049 | monster-engine::physics_bridge | `physics_bridge::tests::{dynamic_body_drives_scene_transform, static_scene_transform_drives_body, unlinked_entities_are_untouched}`, `tests/physics_bridge.rs::{physics_bridge_entity_follows_body, engine_without_physics_leaves_context_none}`, sandbox `--physics` (logs) | PASS |
 
+## Ma trận FR Camera follow + M3 slice (TASK-20261114-002)
+
+| FR | Module (crate) | Test kiểm chứng | Test result |
+| --- | --- | --- | --- |
+| FR-050 | monster-scene::systems | `systems::tests::camera_follow_approaches_target_smoothly`, `camera_follow_offset_and_missing_target` | PASS |
+| FR-051 | monster-math + monster-core | `mat4::tests::look_at_maps_camera_axis_to_view_axis`, `graphics.rs::camera3d_tests::{camera3d_view_projection_combines, camera3d_defaults_sane}`, `gl3d::tests::renderer3d_contract_with_mock` | PASS |
+| FR-052 | monster-platform::gl + monster-engine::gl3d | `gl::tests::{pixel_format_descriptor_layout, gl_constants_match_registry}` + `gl3d::tests::{unbound_renderer_drives_full_frame_protocol, camera3d_drives_begin_state, cube_rotation_is_accepted_parameter}` + build-link opengl32 (GL runtime: demo thủ công) | PASS |
+
 ## Quy tắc bảo trì
 
 - Mỗi FR mới MUST có ít nhất một test thật trước khi đánh dấu ✅.

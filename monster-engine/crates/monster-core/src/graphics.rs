@@ -6,7 +6,7 @@
 //! changes. `PresentTarget` decouples "what was drawn" (a pixel buffer) from
 //! "where it shows up" (a Win32 window, or a headless capture in tests).
 
-use monster_math::{Mat4, Rect, Vec2};
+use monster_math::{Mat4, Rect, Vec2, Vec3};
 
 /// CPU-side RGBA8 image usable as a sprite source.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -215,5 +215,106 @@ mod tests {
         assert_eq!(s, Vec2::new(500.0, 400.0));
         let w = cam.screen_to_world(s);
         assert_eq!(w, Vec2::new(150.0, 100.0));
+    }
+}
+
+/// 3D camera: position, look target, perspective parameters.
+///
+/// View matrix = `Mat4::look_at(position, look_target, up)`; projection =
+/// `Mat4::perspective(fov_y, aspect, near, far)`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Camera3D {
+    pub position: Vec3,
+    pub look_target: Vec3,
+    pub up: Vec3,
+    pub fov_y_radians: f32,
+    pub aspect: f32,
+    pub near: f32,
+    pub far: f32,
+}
+
+impl Camera3D {
+    /// Standard 3D pose: eye at `position`, looking at `look_target`,
+    /// +Y up, 60 degree vertical fov, near 0.1 / far 1000.
+    pub fn new(position: Vec3, look_target: Vec3, aspect: f32) -> Camera3D {
+        Camera3D {
+            position,
+            look_target,
+            up: Vec3::new(0.0, 1.0, 0.0),
+            fov_y_radians: 60.0f32.to_radians(),
+            aspect,
+            near: 0.1,
+            far: 1000.0,
+        }
+    }
+
+    pub fn view_matrix(&self) -> Mat4 {
+        Mat4::look_at(self.position, self.look_target, self.up)
+    }
+
+    pub fn projection_matrix(&self) -> Mat4 {
+        Mat4::perspective(self.fov_y_radians, self.aspect, self.near, self.far)
+    }
+
+    /// Combined view-projection (column-major, GPU upload ready).
+    pub fn view_projection(&self) -> Mat4 {
+        self.projection_matrix().mul_mat4(&self.view_matrix())
+    }
+}
+
+/// Backend-agnostic 3D drawing interface (M3).
+///
+/// Frame protocol: `begin(camera3d)` → draw calls → `end()`. Implemented
+/// by the legacy-GL backend (`Gl3DRenderer` in the facade); modern GL /
+/// other backends slot in behind the same trait.
+pub trait Renderer3D {
+    /// Start a 3D frame with the given camera (clears + sets matrices).
+    fn begin(&mut self, camera: &Camera3D);
+
+    /// Draw an axis-aligned cube centred at `position`, rotated by
+    /// `rotation_y` radians around its Y axis.
+    fn draw_cube(
+        &mut self,
+        position: Vec3,
+        half_size: f32,
+        color: monster_math::Color,
+        rotation_y: f32,
+    );
+
+    /// Draw a reference grid on the XZ plane.
+    fn draw_grid(&mut self, half_size: f32, divisions: u32, color: monster_math::Color);
+
+    /// Finish the frame.
+    fn end(&mut self);
+
+    /// Draw items issued this frame (stats).
+    fn draw_count(&self) -> u32;
+}
+
+#[cfg(test)]
+mod camera3d_tests {
+    use super::*;
+    use monster_math::{approx_eq, Vec4};
+
+    #[test]
+    fn camera3d_view_projection_combines() {
+        let camera = Camera3D::new(Vec3::new(0.0, 0.0, 10.0), Vec3::new(0.0, 0.0, 0.0), 1.0);
+        let vp = camera.view_projection();
+        // the look target lands exactly at the view origin (clip x/y = 0)
+        let c = vp.mul_vec4(Vec4::new(0.0, 0.0, 0.0, 1.0));
+        assert!(approx_eq(c.x, 0.0, 1e-4));
+        assert!(approx_eq(c.y, 0.0, 1e-4));
+    }
+
+    #[test]
+    fn camera3d_defaults_sane() {
+        let camera = Camera3D::new(Vec3::new(0.0, 5.0, 10.0), Vec3::ZERO, 16.0 / 9.0);
+        assert!(approx_eq(
+            camera.fov_y_radians,
+            std::f32::consts::PI / 3.0,
+            1e-4
+        ));
+        assert!(camera.near < camera.far);
+        assert!(camera.far > 0.0);
     }
 }

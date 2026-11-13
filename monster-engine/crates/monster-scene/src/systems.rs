@@ -2,8 +2,30 @@
 
 use crate::components::{Sprite, Transform, Velocity, ZOrder};
 use crate::world::{EntityId, World};
+use monster_core::graphics::Camera2D;
 use monster_math::Vec2;
 use monster_physics::integrate;
+
+/// Smoothly move `camera` towards `target`'s position (+ `offset`).
+///
+/// Frame-rate independent exponential smoothing: `factor = 1 - exp(-speed*dt)`.
+/// `speed` in (0, inf) - larger = snappier. The camera never teleports.
+pub fn camera_follow_system(
+    camera: &mut Camera2D,
+    world: &World,
+    target: EntityId,
+    offset: Vec2,
+    speed: f32,
+    dt: f32,
+) {
+    let Some(target_transform) = world.get::<Transform>(target) else {
+        return;
+    };
+    let desired = target_transform.position + offset;
+    let speed = speed.max(0.0);
+    let factor = 1.0 - (-speed * dt.max(0.0)).exp();
+    camera.position += (desired - camera.position) * factor;
+}
 
 /// Integrate every `Transform + Velocity` pair: `position += velocity * dt`.
 ///
@@ -64,7 +86,7 @@ mod tests {
     use crate::components::Sprite;
     use monster_core::graphics::Texture;
     use monster_core::handle::Handle;
-    use monster_math::Vec2;
+    use monster_math::{approx_eq, Vec2};
 
     #[test]
     fn movement_integrates_positions() {
@@ -83,6 +105,76 @@ mod tests {
         assert_eq!(ta.position, Vec2::new(20.0, -10.0));
         let tb = world.get::<Transform>(b).unwrap(); // no velocity: unchanged
         assert_eq!(tb.position, Vec2::new(1.0, 1.0));
+    }
+
+    #[test]
+    fn camera_follow_approaches_target_smoothly() {
+        let mut world = World::new();
+        let target = world
+            .spawn()
+            .with(Transform::at(Vec2::new(500.0, 300.0)))
+            .build();
+        let mut camera = Camera2D::new(800.0, 600.0);
+        camera.position = Vec2::new(0.0, 0.0);
+
+        // one small step: camera moves part of the way, never teleports
+        camera_follow_system(&mut camera, &world, target, Vec2::ZERO, 8.0, 1.0 / 60.0);
+        let after_one = camera.position;
+        assert!(
+            after_one.x > 0.0 && after_one.x < 500.0,
+            "partial step x={}",
+            after_one.x
+        );
+        assert!(
+            after_one.y > 0.0 && after_one.y < 300.0,
+            "partial step y={}",
+            after_one.y
+        );
+
+        // converge after enough steps
+        for _ in 0..180 {
+            camera_follow_system(&mut camera, &world, target, Vec2::ZERO, 8.0, 1.0 / 60.0);
+        }
+        assert!(
+            approx_eq(camera.position.x, 500.0, 1.0),
+            "x={}",
+            camera.position.x
+        );
+        assert!(
+            approx_eq(camera.position.y, 300.0, 1.0),
+            "y={}",
+            camera.position.y
+        );
+    }
+
+    #[test]
+    fn camera_follow_offset_and_missing_target() {
+        let mut world = World::new();
+        let target = world
+            .spawn()
+            .with(Transform::at(Vec2::new(100.0, 100.0)))
+            .build();
+        let mut camera = Camera2D::new(800.0, 600.0);
+        camera.position = Vec2::new(100.0, 100.0);
+
+        // offset places the camera behind/above the target
+        for _ in 0..120 {
+            camera_follow_system(
+                &mut camera,
+                &world,
+                target,
+                Vec2::new(0.0, -80.0),
+                10.0,
+                1.0 / 60.0,
+            );
+        }
+        assert!(approx_eq(camera.position.x, 100.0, 1.0));
+        assert!(approx_eq(camera.position.y, 20.0, 1.0));
+
+        // despawned target: camera holds position, no panic
+        world.despawn(target);
+        camera_follow_system(&mut camera, &world, target, Vec2::ZERO, 10.0, 1.0 / 60.0);
+        assert!(approx_eq(camera.position.y, 20.0, 1.0));
     }
 
     #[test]

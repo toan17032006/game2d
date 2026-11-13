@@ -111,6 +111,14 @@ Yêu cầu hệ vật lý đầy đủ theo taxonomy người dùng đặt ra. Q
 | --- | --- | --- | --- | --- | --- |
 | FR-049 | PhysicsBridge đồng bộ ECS ↔ `PhysicsWorld2` qua facade: component `PhysicsLink`, `EngineBuilder::with_physics(gravity)`, `UpdateContext.physics`/`InitContext.physics`; hướng sync: dynamic body → scene Transform, static/kinematic/area → scene → body | Must | integration test: entity rơi theo physics qua `engine.run` (y đọng ≈ body); entity không link không bị đụng; engine không bật physics → ctx.physics = None; sandbox `--physics` exit 0 (240 bước, 6 bóng đọng, sprites khớp body < 1px, 12 trigger events) | monster-engine::physics_bridge | ✅ |
 
+## FR — Camera follow + M3 3D slice (TASK-20261114-002)
+
+| ID | Yêu cầu | Priority | Acceptance criteria | Module | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| FR-050 | Camera follow: `camera_follow_system` theo mượt target (exponential smoothing theo speed*dt, không teleport) + offset; target despawn → camera giữ vị trí | Must | 1 bước camera đi một phần đường; 180 bước đạt target ±1px; offset đặt camera sau/lưng target; target despawn không panic | monster-scene::systems | ✅ |
+| FR-051 | 3D camera + trait: `Mat4::look_at` (right-handed) + `Camera3D` (position/look_target/fov/aspect) + `view_projection` + trait `Renderer3D` (begin/draw_cube/draw_grid/end) | Must | look_at đưa eye về gốc tọa độ view, trục +X giữ bên phải; Camera3D defaults hợp lệ (fov 60°, near < far); mock renderer chạy đủ protocol | monster-math/monster-core | ✅ |
+| FR-052 | GL backend (M3 slice): WGL legacy context (`GlContext` 32-bit màu/24-bit depth/double-buffer) + `Gl3DRenderer` implement `Renderer3D` (cube 6 mặt + grid + depth test + perspective frustum); hoạt động bound (GL thật) và unbound (headless recorder); example `cube_3d` | Must | link opengl32 thành công; unbound renderer chạy đủ frame protocol headless; pixel format descriptor 40 bytes đúng layout; demo window chạy thủ công | monster-platform::gl + monster-engine::gl3d | ✅ |
+
 ## References
 
 - `/docs/02-requirements/non-functional-requirements.md`

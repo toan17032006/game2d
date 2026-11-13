@@ -18,6 +18,8 @@ pub enum PlatformError {
     ClassRegistration(u16),
     /// `CreateWindowExW` failed.
     WindowCreation(String),
+    /// OpenGL context creation failed.
+    GlContext(String),
 }
 
 impl fmt::Display for PlatformError {
@@ -28,6 +30,9 @@ impl fmt::Display for PlatformError {
             }
             PlatformError::WindowCreation(what) => {
                 write!(f, "CreateWindowExW failed: {what}")
+            }
+            PlatformError::GlContext(what) => {
+                write!(f, "OpenGL context creation failed: {what}")
             }
         }
     }
@@ -281,6 +286,14 @@ impl Drop for Window {
                 ffi::DestroyWindow(self.hwnd);
             }
         }
+    }
+}
+
+impl Window {
+    /// Raw Win32 window handle (for GL context creation and similar
+    /// platform integrations). Null when the window is closed/dropped.
+    pub fn raw_hwnd(&self) -> ffi::HWND {
+        self.hwnd
     }
 }
 
