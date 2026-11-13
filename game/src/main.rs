@@ -272,6 +272,10 @@ impl SandboxGame {
         }
         log_info!("game: tilemap walls spawned: {} solids", r.solid_bodies);
 
+        // background music loop (winmm plays with speakers; Null headless)
+        let music = AudioClip::sine(22050, 220.0, 2.0, 3000);
+        ctx.audio.play_clip(&music, 0.2, true); // looped
+
         ctx.camera.position = Vec2::new(-200.0, 150.0);
         log_info!("game: player + 3 coins + camera follow ready");
     }

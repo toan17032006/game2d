@@ -35,7 +35,7 @@ pub mod physics_bridge;
 
 pub use engine::{
     Engine, EngineBuilder, EngineConfig, EngineRunResult, GameApp, InitContext, RenderContext,
-    UpdateContext,
+    RenderContext3D, UpdateContext,
 };
 pub use physics_bridge::{
     attach as physics_attach, sync_dynamic_to_scene, sync_static_to_physics, PhysicsLink,
@@ -43,7 +43,9 @@ pub use physics_bridge::{
 
 /// Convenience re-export of the whole public API surface.
 pub mod prelude {
+    pub use crate::engine::RenderContext3D;
     pub use monster_assets::{AssetError, Assets, ImageData};
+    pub use monster_audio::load_wav_file;
     pub use monster_audio::NullAudioBackend;
     pub use monster_core::audio::{AudioBackend, AudioClip};
     pub use monster_core::events::{EngineEvent, EventBus};

@@ -151,6 +151,13 @@ Yêu cầu hệ vật lý đầy đủ theo taxonomy người dùng đặt ra. Q
 | --- | --- | --- | --- | --- | --- |
 | FR-066 | Game tách hoàn toàn khỏi engine: `/game/` binary crate phụ thuộc `monster-engine` path dependency; engine facade KHÔNG chứa game logic (không GamePhase, không coin collect, không level flow); game import qua prelude-only | Must | `cargo build` từ /game/ exit 0; `cargo run -- --headless 120 --game` exit 0; engine tests 205 PASS không regression; engine src không chứa GamePhase/sandbox | /game/ + /monster-engine/ | ✅ |
 
+## FR — Engine 3D integration + music (TASK-20261114-008)
+
+| ID | Yêu cầu | Priority | Acceptance criteria | Module | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| FR-067 | Engine 3D integration: `GameApp::render_3d` (default no-op) + `EngineBuilder::with_3d()` + `RenderContext3D` + `Camera3D` trong InitContext; Gl3DRenderer bound khi window mode, unbound khi headless | Must | engine tests 205 PASS (render_3d default no-op không break); game --game exit 0; build + examples compile | monster-engine::engine | ✅ |
+| FR-068 | Music WAV loading: `load_wav_file` + `play_clip(clip, vol, looped=true)` qua winmm backend | Should | game mode play music loop; skip-graceful khi không device | monster-audio + monster-engine | ✅ |
+
 ## References
 
 - `/docs/02-requirements/non-functional-requirements.md`

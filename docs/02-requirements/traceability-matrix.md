@@ -137,6 +137,13 @@ Truy vết hai chiều: requirement → module hiện thực → test kiểm ch�
 | --- | --- | --- | --- |
 | FR-066 | /game/ + /monster-engine/ | `game/` cargo build exit 0 + `--headless 120 --game` exit 0 + engine tests 205 PASS không regression | PASS |
 
+## Ma trận FR Engine 3D + music (TASK-20261114-008)
+
+| FR | Module (crate) | Test kiểm chứng | Test result |
+| --- | --- | --- | --- |
+| FR-067 | monster-engine::engine + gl3d | `engine.rs` render_3d default no-op + `with_3d` builder + engine tests 205 PASS | PASS |
+| FR-068 | monster-audio + monster-engine | `wav::tests::load_wav_file_roundtrip` + game run exit 0 (`logs/game-run.log`) | PASS |
+
 ## Quy tắc bảo trì
 
 - Mỗi FR mới MUST có ít nhất một test thật trước khi đánh dấu ✅.

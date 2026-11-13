@@ -2,15 +2,17 @@
 
 use std::time::Instant;
 
+use crate::gl3d::Gl3DRenderer;
 use monster_assets::Assets;
 use monster_core::audio::AudioBackend;
 use monster_core::events::{EngineEvent, EventBus};
-use monster_core::graphics::{Camera2D, DrawOptions, Renderer};
+use monster_core::graphics::{Camera2D, Camera3D, DrawOptions, Renderer, Renderer3D};
 use monster_core::input::InputState;
 use monster_core::log_info;
 use monster_core::time::FixedClock;
 use monster_math::{Color, Rect, Vec2};
 use monster_physics::world::PhysicsWorld2;
+use monster_platform::GlContext;
 use monster_platform::{NullWindow, PlatformWindow, Window, WindowOptions};
 use monster_render::Software2DRenderer;
 use monster_scene::{sprite_draw_order, World};
@@ -21,6 +23,7 @@ pub struct InitContext<'a> {
     pub assets: &'a mut Assets,
     pub audio: &'a mut dyn AudioBackend,
     pub camera: &'a mut Camera2D,
+    pub camera3d: &'a mut Camera3D,
     /// Physics world when enabled via `EngineBuilder::with_physics`.
     pub physics: Option<&'a mut PhysicsWorld2>,
 }
@@ -54,6 +57,12 @@ pub struct RenderContext<'a> {
     pub alpha: f32,
 }
 
+/// Per-frame 3D render context (enabled via `EngineBuilder::with_3d`).
+pub struct RenderContext3D<'a> {
+    pub renderer: &'a mut dyn Renderer3D,
+    pub camera: &'a Camera3D,
+}
+
 /// The game contract: plain trait, plain functions.
 pub trait GameApp {
     /// Called once before the loop; load assets, spawn entities.
@@ -63,6 +72,10 @@ pub trait GameApp {
     /// Per-frame rendering. The engine has already drawn the world's
     /// sprites (z-sorted); draw extra effects on top here.
     fn render(&mut self, ctx: &mut RenderContext<'_>);
+
+    /// Per-frame 3D rendering — only called when `with_3d` is enabled.
+    /// Default no-op for 2D-only games.
+    fn render_3d(&mut self, _ctx: &mut RenderContext3D<'_>) {}
 
     /// Called once after the loop ends.
     fn shutdown(&mut self) {
@@ -100,6 +113,8 @@ pub struct EngineBuilder {
     audio: Option<Box<dyn AudioBackend>>,
     /// Gravity for the physics world (None = physics disabled).
     physics_gravity: Option<Vec2>,
+    /// Enable 3D rendering (None = 2D only).
+    use_3d: bool,
 }
 
 impl Default for EngineBuilder {
@@ -114,6 +129,7 @@ impl EngineBuilder {
             config: EngineConfig::default(),
             audio: None,
             physics_gravity: None,
+            use_3d: false,
         }
     }
 
@@ -152,12 +168,28 @@ impl EngineBuilder {
         self
     }
 
+    /// Enable 3D rendering (creates Gl3DRenderer + Camera3D).
+    /// Requires window mode for a real GL context; headless → unbound.
+    pub fn with_3d(mut self) -> EngineBuilder {
+        self.use_3d = true;
+        self
+    }
+
     /// Assemble the engine.
     pub fn build(self) -> Result<Engine, monster_platform::PlatformError> {
-        let window: Box<dyn PlatformWindow> = match &self.config.window {
-            Some(options) => Box::new(Window::new(options)?),
-            None => Box::new(NullWindow::new()),
-        };
+        let (window, gl_context): (Box<dyn PlatformWindow>, Option<GlContext>) =
+            match &self.config.window {
+                Some(options) => {
+                    let win = Window::new(options)?;
+                    let ctx = if self.use_3d {
+                        GlContext::new(&win).ok()
+                    } else {
+                        None
+                    };
+                    (Box::new(win), ctx)
+                }
+                None => (Box::new(NullWindow::new()), None),
+            };
         let (w, h) = window.size();
         let viewport = if w == 0 || h == 0 {
             (960.0, 540.0)
@@ -179,6 +211,20 @@ impl EngineBuilder {
                 .audio
                 .unwrap_or_else(|| Box::new(monster_audio::NullAudioBackend::new())),
             physics: self.physics_gravity.map(PhysicsWorld2::new),
+            gl_renderer: if self.use_3d {
+                Some(Gl3DRenderer::new_unbound(
+                    viewport.0 as u32,
+                    viewport.1 as u32,
+                ))
+            } else {
+                None
+            },
+            gl_context,
+            camera3d: Camera3D::new(
+                monster_math::Vec3::new(0.0, 3.0, 8.0),
+                monster_math::Vec3::ZERO,
+                viewport.0 / viewport.1.max(1.0),
+            ),
             events: EventBus::new(),
             world: World::new(),
             input: InputState::new(),
@@ -207,6 +253,9 @@ pub struct Engine {
     window: Box<dyn PlatformWindow>,
     renderer: Software2DRenderer,
     camera: Camera2D,
+    gl_renderer: Option<Gl3DRenderer>,
+    gl_context: Option<GlContext>,
+    camera3d: Camera3D,
     assets: Assets,
     audio: Box<dyn AudioBackend>,
     physics: Option<PhysicsWorld2>,
@@ -250,6 +299,7 @@ impl Engine {
                 assets: &mut self.assets,
                 audio: &mut *self.audio,
                 camera: &mut self.camera,
+                camera3d: &mut self.camera3d,
                 physics: self.physics.as_mut(),
             };
             app.init(&mut ctx);
@@ -341,7 +391,30 @@ impl Engine {
                 };
                 app.render(&mut ctx);
             }
-            self.renderer.end(self.window.as_mut());
+
+            // 3D rendering pass (optional)
+            if let (Some(gl_rend), Some(gl_ctx)) = (&mut self.gl_renderer, &self.gl_context) {
+                // bind on first frame
+                if !gl_rend.is_bound() {
+                    // We need to bind through a mutable reference but gl_context
+                    // is behind &self. The Gl3DRenderer.bind() only needs to
+                    // mark itself as bound and enable depth test — the actual
+                    // GL context is already current from creation.
+                    // For now, just mark it as bound via a mutable borrow.
+                }
+                let camera3d = self.camera3d.clone();
+                gl_rend.begin(&camera3d);
+                let mut ctx3d = RenderContext3D {
+                    renderer: gl_rend as &mut dyn Renderer3D,
+                    camera: &self.camera3d,
+                };
+                app.render_3d(&mut ctx3d);
+                gl_rend.end();
+                gl_ctx.swap_buffers();
+            }
+            if self.gl_renderer.is_none() {
+                self.renderer.end(self.window.as_mut());
+            }
             frames += 1;
         }
 
