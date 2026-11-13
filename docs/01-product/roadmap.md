@@ -20,7 +20,9 @@ Lộ trình phát triển theo milestone. Mỗi milestone có đầu ra kiểm c
 | **M3 — Tầng 3D** | GPU backend + camera 3D + mesh/shader | 🔶 Đang làm |
 | — M3 slice 1 ✅ | Trait `Renderer3D` + `Camera3D` (look_at/perspective) + GL legacy backend qua WGL (`GlContext`, `Gl3DRenderer`) + cube demo + ADR-002 — TASK-20261114-002 | ✅ |
 | — M3 tiếp theo | Modern GL context (extension loader + shaders), mesh loading, physics 3D (Aabb3), Engine loop 3D tích hợp | ⬜ |
-| **M4 — Feature game 2D** | Sprite animation (spritesheet Tiny Swords), tilemap, particle, text, camera follow/shake, audio playback thật, UI-less menu flow | ⬜ Chưa bắt đầu |
+| **M4 — Feature game 2D** | Sprite animation (spritesheet Tiny Swords), tilemap, particle, text, camera follow/shake, audio playback thật, UI-less menu flow | 🔶 Đang làm |
+| — M4 slice 1 ✅ | Sprite animation (grid-slice + Animator + system) + camera follow + Tiny Swords Warrior_Run integration + coin collect mini-game (--game) — TASK-20261114-003 | ✅ |
+| — M4 tiếp theo | Tilemap, particle, text, audio playback thật | ⬜ |
 | **M5 — Game hoàn chỉnh đầu tiên** | Đóng gói một game hoàn chỉnh trên asset Tiny Swords (chạy window mode, có âm thanh) | ⬜ Chưa bắt đầu |
 
 ## Chi tiết M3 (mục tiêu kế tiếp)

@@ -52,6 +52,7 @@ pub mod prelude {
     pub use monster_core::handle::Handle;
     pub use monster_core::input::{InputState, KeyCode, MouseButton};
     pub use monster_core::log::{set_max_level, Level};
+    pub use monster_core::mesh::Mesh3D;
     pub use monster_core::time::{FixedClock, Stopwatch};
     pub use monster_core::{log_debug, log_error, log_info, log_trace, log_warn};
     pub use monster_math::{Color, Mat4, Quat, Rect, Vec2, Vec3, Vec4};
@@ -62,7 +63,8 @@ pub mod prelude {
     pub use monster_platform::{NullWindow, PlatformWindow, Window, WindowOptions};
     pub use monster_render::Software2DRenderer;
     pub use monster_scene::{
-        movement_system, sprite_draw_order, EntityId, Sprite, Transform, Velocity, World, ZOrder,
+        camera_follow_system, movement_system, sprite_animation_system, sprite_draw_order,
+        AnimationClip, Animator, EntityId, Sprite, Transform, Velocity, World, ZOrder,
     };
 
     pub use crate::engine::{

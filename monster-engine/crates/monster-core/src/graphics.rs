@@ -284,6 +284,16 @@ pub trait Renderer3D {
     /// Draw a reference grid on the XZ plane.
     fn draw_grid(&mut self, half_size: f32, divisions: u32, color: monster_math::Color);
 
+    /// Draw an indexed triangle mesh at `position`, rotated by `rotation_y`
+    /// around its Y axis, tinted `color`.
+    fn draw_mesh(
+        &mut self,
+        mesh: &crate::mesh::Mesh3D,
+        position: Vec3,
+        rotation_y: f32,
+        color: monster_math::Color,
+    );
+
     /// Finish the frame.
     fn end(&mut self);
 

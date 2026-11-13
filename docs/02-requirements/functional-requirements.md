@@ -119,6 +119,14 @@ Yêu cầu hệ vật lý đầy đủ theo taxonomy người dùng đặt ra. Q
 | FR-051 | 3D camera + trait: `Mat4::look_at` (right-handed) + `Camera3D` (position/look_target/fov/aspect) + `view_projection` + trait `Renderer3D` (begin/draw_cube/draw_grid/end) | Must | look_at đưa eye về gốc tọa độ view, trục +X giữ bên phải; Camera3D defaults hợp lệ (fov 60°, near < far); mock renderer chạy đủ protocol | monster-math/monster-core | ✅ |
 | FR-052 | GL backend (M3 slice): WGL legacy context (`GlContext` 32-bit màu/24-bit depth/double-buffer) + `Gl3DRenderer` implement `Renderer3D` (cube 6 mặt + grid + depth test + perspective frustum); hoạt động bound (GL thật) và unbound (headless recorder); example `cube_3d` | Must | link opengl32 thành công; unbound renderer chạy đủ frame protocol headless; pixel format descriptor 40 bytes đúng layout; demo window chạy thủ công | monster-platform::gl + monster-engine::gl3d | ✅ |
 
+## FR — Animation + Mesh + Game slice (TASK-20261114-003)
+
+| ID | Yêu cầu | Priority | Acceptance criteria | Module | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| FR-053 | Sprite animation: `AnimationClip` (grid-slice row-major) + component `Animator` + `sprite_animation_system` (advance, loop wrap, non-loop clamp + stop, pause) viết frame rect vào `Sprite.src` | Must | from_grid offsets đúng row-major; loop wrap (7 % 4 = 3); non-loop clamp frame cuối + playing=false; pause đứng yên | monster-scene::animation | ✅ |
+| FR-054 | Mesh loading (M3 slice 2): `Mesh3D` (vertices/indices, cube builder) + OBJ loader thuần (v/f, fan triangulation, negative indices, lỗi có mô tả) + `Renderer3D::draw_mesh` (mock đếm + GL immediate triangles) | Must | cube 8 verts/12 tris; OBJ fixture parse indices đúng; lỗi OBJ (thiếu tọa độ, face 2 index, index ngoài range) → Err mô tả; draw_mesh unbound đếm 1 | monster-core::mesh + gl3d | ✅ |
+| FR-055 | Tiny Swords game slice: sandbox `--game` — Character player (move_and_slide, input A/D hoặc auto-walk headless) + Warrior_Run animation (grid-slice từ PNG thật) + camera follow + 3 coin Area (score) | Must | headless exit 0: player đi > 150px, animation đổi frame > 2 lần, score = 3/3 coins, camera follow (di chuyển theo player), demo gốc + --physics không regression | monster-engine::examples | ✅ |
+
 ## References
 
 - `/docs/02-requirements/non-functional-requirements.md`

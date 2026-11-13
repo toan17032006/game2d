@@ -7,6 +7,7 @@
 //!   full frame protocol without a desktop session (NullWindow philosophy).
 
 use monster_core::graphics::{Camera3D, Renderer3D};
+use monster_core::mesh::Mesh3D;
 use monster_math::{Color, Vec3};
 use monster_platform::gl;
 use monster_platform::GlContext;
@@ -144,6 +145,24 @@ impl Renderer3D for Gl3DRenderer {
         self.draw_count += 1;
     }
 
+    fn draw_mesh(&mut self, mesh: &Mesh3D, position: Vec3, rotation_y: f32, color: Color) {
+        if self.issue() {
+            gl::push_matrix();
+            gl::translate(position.x, position.y, position.z);
+            gl::rotate_y(rotation_y);
+            let (r, g, b, _) = color.to_f32_tuple();
+            gl::color3(r, g, b);
+            gl::begin_triangles();
+            for &index in &mesh.indices {
+                let v = mesh.vertices[index as usize];
+                gl::vertex3(v.x, v.y, v.z);
+            }
+            gl::end();
+            gl::pop_matrix();
+        }
+        self.draw_count += 1;
+    }
+
     fn draw_grid(&mut self, half_size: f32, divisions: u32, color: Color) {
         if self.issue() {
             let (r, g, b, _) = color.to_f32_tuple();
@@ -191,6 +210,17 @@ mod tests {
         renderer.begin(&camera);
         assert_eq!(renderer.draw_count(), 0); // counter resets per frame
         assert!(renderer.is_bound() == false);
+    }
+
+    #[test]
+    fn draw_mesh_counts_in_unbound_mode() {
+        let mut renderer = Gl3DRenderer::new_unbound(1, 1);
+        let camera = Camera3D::new(Vec3::new(0.0, 0.0, 5.0), Vec3::ZERO, 1.0);
+        let mesh = Mesh3D::cube(0.5);
+        renderer.begin(&camera);
+        renderer.draw_mesh(&mesh, Vec3::new(1.0, 0.0, 0.0), 0.25, Color::BLUE);
+        renderer.end();
+        assert_eq!(renderer.draw_count(), 1);
     }
 
     #[test]

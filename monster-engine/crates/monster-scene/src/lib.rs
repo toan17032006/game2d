@@ -8,10 +8,12 @@
 //! - [`EntityId`] is generational, so stale references after despawn are
 //!   detected instead of silently hitting reused storage.
 
+pub mod animation;
 pub mod components;
 pub mod systems;
 pub mod world;
 
+pub use animation::{sprite_animation_system, AnimationClip, Animator};
 pub use components::{Sprite, Transform, Velocity, ZOrder};
-pub use systems::{movement_system, sprite_draw_order};
+pub use systems::{camera_follow_system, movement_system, sprite_draw_order};
 pub use world::{EntityBuilder, EntityId, World};

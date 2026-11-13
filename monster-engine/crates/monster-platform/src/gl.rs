@@ -47,6 +47,7 @@ const GL_PROJECTION: u32 = 0x1701;
 const GL_MODELVIEW: u32 = 0x1700;
 const GL_QUADS: u32 = 0x0007;
 const GL_LINES: u32 = 0x0001;
+const GL_TRIANGLES: u32 = 0x0004;
 const GL_NO_ERROR: u32 = 0;
 
 /// PIXELFORMATDESCRIPTOR (Win32, 40 bytes).
@@ -279,6 +280,12 @@ pub fn pop_matrix() {
 pub fn begin_quads() {
     unsafe {
         glBegin(GL_QUADS);
+    }
+}
+
+pub fn begin_triangles() {
+    unsafe {
+        glBegin(GL_TRIANGLES);
     }
 }
 

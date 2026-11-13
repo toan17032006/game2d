@@ -1,13 +1,16 @@
 //! Monster Engine sandbox demo.
 //!
 //! Modes:
-//! - `--physics`: physics demo — a static ground, 6 falling balls attached
-//!   to sprites via the physics bridge, and a trigger area that counts
-//!   overlaps. Works headless (`--headless N`) and in a window.
+//! - `--game` (M4 slice): platformer mini-game — Character player driven by
+//!   `move_and_slide`, Tiny Swords Warrior_Run animation (grid-sliced),
+//!   camera follow, collectible coins scored through Area triggers. Works
+//!   headless (auto-walks right, verifies movement/animation/score) and in
+//!   a window (A/D or arrows to walk).
+//! - `--physics`: physics demo — 6 balls attached to sprites via the bridge
+//!   falling onto a static ground, plus a trigger area.
 //! - default (no flags): the original bouncing-grid sprite demo.
 //!
-//! Headless runs exit 0 after `[frames]` rendered frames (default 120) with
-//! the verification checks applied.
+//! Headless runs exit 0 after the mode's verification passes.
 
 use monster_engine::prelude::*;
 
@@ -23,12 +26,24 @@ struct SandboxGame {
     frames_rendered: u64,
     /// Physics demo mode (--physics).
     physics_mode: bool,
-    /// Simulated fixed steps (physics mode exit condition).
+    /// Simulated fixed steps (physics/game mode exit condition).
     sim_steps: u32,
     ball_bodies: Vec<usize>,
     trigger_events: u32,
     /// Entity ids of the physics balls (sprites follow via the bridge).
     ball_entities: Vec<EntityId>,
+    /// Mini-game mode (--game): player + coins + camera follow.
+    game_mode: bool,
+    player_entity: Option<EntityId>,
+    player_body: usize,
+    player_start_x: f32,
+    coin_bodies: Vec<usize>,
+    coin_collected: Vec<bool>,
+    coin_entities: Vec<EntityId>,
+    score: u32,
+    anim_frames_seen: u32,
+    last_anim_frame: usize,
+    camera_moved: bool,
 }
 
 impl SandboxGame {
@@ -46,10 +61,141 @@ impl SandboxGame {
         assets.insert_rgba(key, 32, 32, rgba)
     }
 }
+impl SandboxGame {
+    /// --game: platformer slice — Character player moved by move_and_slide,
+    /// Tiny Swords Warrior_Run animation (grid-sliced, 192x192 frames),
+    /// camera follow, coins collected through Area triggers.
+    /// --game: platformer slice — Character player moved by move_and_slide,
+    /// Tiny Swords Warrior_Run animation (grid-sliced), camera follow, coins.
+    fn init_game(&mut self, ctx: &mut InitContext<'_>) {
+        let Some(physics) = ctx.physics.as_mut() else {
+            log_error!("--game needs physics: builder.with_physics(...)");
+            return;
+        };
+
+        // ground (authored in the scene, synced to physics)
+        let ground = physics.add_body(PhysicsBody2::new(
+            BodyKind2::Static,
+            Vec2::new(0.0, GROUND_Y),
+            ColliderShape2::Box {
+                half_extents: Vec2::new(1000.0, 10.0),
+            },
+        ));
+        let ground_tex =
+            Self::make_sprite_texture(ctx.assets, "game_ground", Color::opaque(90, 130, 90));
+        let ground_entity = ctx
+            .world
+            .spawn()
+            .with(Transform::at(Vec2::new(0.0, GROUND_Y)))
+            .with(Sprite {
+                texture: ground_tex,
+                size: Vec2::new(2000.0, 20.0),
+                src: None,
+            })
+            .build();
+        physics_attach(&mut ctx.world, ground_entity, ground);
+
+        // player: Character body + animated Warrior sprite
+        let player = physics.add_body(PhysicsBody2::new(
+            BodyKind2::Character,
+            Vec2::new(-200.0, 180.0),
+            ColliderShape2::Box {
+                half_extents: Vec2::new(12.0, 16.0),
+            },
+        ));
+        self.player_body = player;
+        self.player_start_x = -200.0;
+
+        // Tiny Swords Warrior_Run sheet (grid-sliced at 192x192 per frame)
+        let sheet_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(
+            "../../../assest/Tiny Swords (Free Pack)/Units/Blue Units/Warrior/Warrior_Run.png",
+        );
+        let (clip, tex) = match ctx.assets.load_file(&sheet_path) {
+            Ok(handle) => {
+                let tex = ctx.assets.texture(handle).cloned().unwrap();
+                let dims = (tex.width(), tex.height());
+                log_info!("game: Tiny Swords sheet {}x{}", dims.0, dims.1);
+                let clip = AnimationClip::from_grid(
+                    dims.0 as f32,
+                    dims.1 as f32,
+                    192.0,
+                    192.0,
+                    (dims.0 as usize) / 192,
+                    10.0,
+                    true,
+                );
+                (clip, handle)
+            }
+            Err(e) => {
+                log_warn!("game: Tiny Swords sheet unavailable ({e}) — procedural fallback");
+                let handle = ctx.assets.insert_rgba(
+                    "player_fallback",
+                    32,
+                    32,
+                    vec![146, 110, 205, 255].repeat(32 * 32),
+                );
+                (
+                    AnimationClip::from_grid(128.0, 32.0, 32.0, 32.0, 4, 8.0, true),
+                    handle,
+                )
+            }
+        };
+
+        let player_entity = ctx
+            .world
+            .spawn()
+            .with(Transform::at(Vec2::new(-200.0, 180.0)))
+            .with(Sprite {
+                texture: tex,
+                size: Vec2::new(96.0, 96.0),
+                src: None,
+            })
+            .with(Animator::new(clip))
+            .build();
+        physics_attach(&mut ctx.world, player_entity, player);
+        self.player_entity = Some(player_entity);
+
+        // coins: Area triggers along the walk path
+        for x in [-100.0f32, 0.0, 100.0] {
+            let coin = physics.add_body(PhysicsBody2::new(
+                BodyKind2::Area,
+                Vec2::new(x, 200.0),
+                ColliderShape2::Circle { radius: 14.0 },
+            ));
+            self.coin_bodies.push(coin);
+            self.coin_collected.push(false);
+            let coin_tex = Self::make_sprite_texture(
+                ctx.assets,
+                &format!("game_coin_{}", x as i32),
+                Color::opaque(230, 200, 60),
+            );
+            let coin_entity = ctx
+                .world
+                .spawn()
+                .with(Transform::at(Vec2::new(x, 200.0)))
+                .with(Sprite {
+                    texture: coin_tex,
+                    size: Vec2::splat(24.0),
+                    src: None,
+                })
+                .build();
+            physics_attach(&mut ctx.world, coin_entity, coin);
+            self.coin_entities.push(coin_entity);
+        }
+
+        ctx.camera.position = Vec2::new(-200.0, 150.0);
+        log_info!("game: player + 3 coins + camera follow ready");
+    }
+}
 
 impl GameApp for SandboxGame {
     fn init(&mut self, ctx: &mut InitContext<'_>) {
         ctx.camera.position = Vec2::ZERO;
+
+        if self.game_mode {
+            self.init_game(ctx);
+            return;
+        }
 
         let textures = [
             ("tex_purple", Color::opaque(146, 110, 205)),
@@ -63,13 +209,8 @@ impl GameApp for SandboxGame {
             .collect();
 
         if self.physics_mode {
-            if ctx.physics.is_none() {
-                log_error!("--physics requested but physics was not enabled: add with_physics");
-                return;
-            }
             let physics = ctx.physics.as_mut().unwrap();
 
-            // static ground, authored in the scene and synced to physics
             let ground = physics.add_body(PhysicsBody2::new(
                 BodyKind2::Static,
                 Vec2::new(0.0, GROUND_Y),
@@ -89,14 +230,12 @@ impl GameApp for SandboxGame {
                 .build();
             physics_attach(&mut ctx.world, ground_entity, ground);
 
-            // trigger area mid-air: balls pass through and fire events
             let _area = physics.add_body(PhysicsBody2::new(
                 BodyKind2::Area,
                 Vec2::new(0.0, 150.0),
                 ColliderShape2::Circle { radius: 40.0 },
             ));
 
-            // falling balls attached to sprites through the bridge
             for i in 0..6 {
                 let x = -75.0 + i as f32 * 30.0;
                 let body = physics.add_body(
@@ -164,12 +303,76 @@ impl GameApp for SandboxGame {
         if ctx.input.was_pressed(KeyCode::Escape) {
             ctx.exit();
         }
-        // headless budget: once enough frames were rendered, stop
-        if let Some(limit) = self.headless_frame_limit {
-            if self.frames_rendered >= limit {
-                ctx.exit();
-                return;
+
+        if self.game_mode {
+            // input: headless auto-walks right; window uses A/D + arrows
+            let move_x = if self.headless_frame_limit.is_some() {
+                140.0
+            } else if ctx.input.is_down(KeyCode::A) || ctx.input.is_down(KeyCode::Left) {
+                -140.0
+            } else if ctx.input.is_down(KeyCode::D) || ctx.input.is_down(KeyCode::Right) {
+                140.0
+            } else {
+                0.0
+            };
+
+            // drive the character (engine already stepped physics bodies)
+            if let Some(physics) = ctx.physics.as_mut() {
+                physics.move_and_slide(self.player_body, Vec2::new(move_x, 200.0), ctx.dt);
+                // collect coins: player overlapping an Area body
+                for (i, &body) in self.coin_bodies.iter().enumerate() {
+                    if self.coin_collected[i] {
+                        continue;
+                    }
+                    if physics.overlapping(self.player_body).contains(&body) {
+                        self.coin_collected[i] = true;
+                        self.score += 1;
+                        if let Some(entity) = self.coin_entities.get(i) {
+                            if let Some(t) = ctx.world.get_mut::<Transform>(*entity) {
+                                t.position = Vec2::new(0.0, -5000.0);
+                            }
+                        }
+                    }
+                }
             }
+
+            // camera follows the player smoothly
+            if let Some(player) = self.player_entity {
+                camera_follow_system(
+                    ctx.camera,
+                    ctx.world,
+                    player,
+                    Vec2::new(0.0, -30.0),
+                    6.0,
+                    ctx.dt,
+                );
+                if let Some(t) = ctx.world.get::<Transform>(player) {
+                    if (ctx.camera.position - t.position).length() < 120.0 {
+                        self.camera_moved = true;
+                    }
+                }
+            }
+
+            // animation drives the player sprite
+            sprite_animation_system(ctx.world, ctx.dt);
+            if let Some(player) = self.player_entity {
+                let frame = ctx
+                    .world
+                    .get::<Animator>(player)
+                    .map(|a| a.frame)
+                    .unwrap_or(0);
+                if frame != self.last_anim_frame {
+                    self.last_anim_frame = frame;
+                    self.anim_frames_seen += 1;
+                }
+            }
+
+            // exit after ~5 simulated seconds (auto-walk covers all coins)
+            self.sim_steps += 1;
+            if self.sim_steps >= 300 {
+                ctx.exit();
+            }
+            return;
         }
 
         if self.physics_mode {
@@ -184,13 +387,20 @@ impl GameApp for SandboxGame {
                     }
                 }
             }
-            // physics progress is measured in simulated steps (4s of sim),
-            // not frames — headless renders far faster than the 60Hz clock
+            // physics progress is measured in simulated steps (4s of sim)
             self.sim_steps += 1;
             if self.sim_steps >= 240 {
                 ctx.exit();
             }
             return; // sprites follow physics via the bridge (no manual motion)
+        }
+
+        // headless frame budget for the classic demo
+        if let Some(limit) = self.headless_frame_limit {
+            if self.frames_rendered >= limit {
+                ctx.exit();
+                return;
+            }
         }
 
         movement_system(ctx.world, ctx.dt);
@@ -250,13 +460,14 @@ fn main() {
     let mut open_window = false;
     let mut headless_frames: Option<u64> = None;
     let mut physics_mode = false;
+    let mut game_mode = false;
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
             "--headless" => {
                 headless_frames = Some(match args.get(i + 1).and_then(|s| s.parse::<u64>().ok()) {
                     Some(n) => {
-                        i += 1; // consumed the count argument
+                        i += 1;
                         n
                     }
                     None => DEFAULT_HEADLESS_FRAMES,
@@ -264,6 +475,13 @@ fn main() {
             }
             "--window" => open_window = true,
             "--physics" => physics_mode = true,
+            "--game" => {
+                game_mode = true;
+                physics_mode = true;
+                if headless_frames.is_none() {
+                    headless_frames = Some(u64::MAX); // sim-step exit condition instead
+                }
+            }
             _ => {}
         }
         i += 1;
@@ -288,20 +506,59 @@ fn main() {
 
     let mut engine = builder.build().expect("engine build");
     let mut game = SandboxGame {
-        headless_frame_limit: if physics_mode { None } else { headless_frames },
+        headless_frame_limit: if game_mode {
+            headless_frames
+        } else if physics_mode {
+            None
+        } else {
+            headless_frames
+        },
         frames_rendered: 0,
         physics_mode,
         sim_steps: 0,
         ball_bodies: Vec::new(),
         trigger_events: 0,
         ball_entities: Vec::new(),
+        game_mode,
+        player_entity: None,
+        player_body: usize::MAX,
+        player_start_x: -200.0,
+        coin_bodies: Vec::new(),
+        coin_collected: Vec::new(),
+        coin_entities: Vec::new(),
+        score: 0,
+        anim_frames_seen: 0,
+        last_anim_frame: 0,
+        camera_moved: false,
     };
 
     let result = engine.run(&mut game);
 
-    // verification: headless physics runs must land every ball near the
-    // ground surface (y = GROUND_Y - 10) and record trigger events
-    let ok = if physics_mode {
+    // per-mode verification
+    let ok = if game_mode {
+        let player_x = match game.player_entity {
+            Some(entity) => engine
+                .world()
+                .get::<Transform>(entity)
+                .map(|t| t.position.x)
+                .unwrap_or(f32::MIN),
+            None => f32::MIN,
+        };
+        let camera_x = engine.camera().position.x;
+        let moved = player_x > game.player_start_x + 150.0;
+        let animated = game.anim_frames_seen > 2;
+        let scored = game.score >= 2;
+        let followed = game.camera_moved && camera_x > -150.0;
+        log_info!(
+            "game verify: player_x={:.1} moved={} animated={} score={} camera_followed={}",
+            player_x,
+            moved,
+            animated,
+            game.score,
+            followed
+        );
+        moved && animated && scored && followed
+    } else if physics_mode {
         let mut all_landed = true;
         for (i, &body) in game.ball_bodies.iter().enumerate() {
             let y = engine.physics().unwrap().bodies[body].transform.position.y;
@@ -326,10 +583,10 @@ fn main() {
     };
 
     log_info!(
-        "sandbox done: frames={} updates={} trigger_events={} ok={}",
+        "sandbox done: frames={} updates={} score={} ok={}",
         result.frames,
         result.updates,
-        game.trigger_events,
+        game.score,
         ok
     );
     if !ok {

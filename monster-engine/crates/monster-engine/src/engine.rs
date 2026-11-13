@@ -233,6 +233,11 @@ impl Engine {
         self.physics.as_ref()
     }
 
+    /// Read-only camera access for tools/tests.
+    pub fn camera(&self) -> &monster_core::graphics::Camera2D {
+        &self.camera
+    }
+
     /// Run the game until the window closes or `UpdateContext::exit` fires.
     pub fn run(&mut self, app: &mut dyn GameApp) -> EngineRunResult {
         let started = Instant::now();

@@ -105,6 +105,14 @@ Truy vết hai chiều: requirement → module hiện thực → test kiểm ch�
 | FR-051 | monster-math + monster-core | `mat4::tests::look_at_maps_camera_axis_to_view_axis`, `graphics.rs::camera3d_tests::{camera3d_view_projection_combines, camera3d_defaults_sane}`, `gl3d::tests::renderer3d_contract_with_mock` | PASS |
 | FR-052 | monster-platform::gl + monster-engine::gl3d | `gl::tests::{pixel_format_descriptor_layout, gl_constants_match_registry}` + `gl3d::tests::{unbound_renderer_drives_full_frame_protocol, camera3d_drives_begin_state, cube_rotation_is_accepted_parameter}` + build-link opengl32 (GL runtime: demo thủ công) | PASS |
 
+## Ma trận FR Animation + Mesh + Game slice (TASK-20261114-003)
+
+| FR | Module (crate) | Test kiểm chứng | Test result |
+| --- | --- | --- | --- |
+| FR-053 | monster-scene::animation | `animation::tests::{from_grid_slices_row_major, source_rect_clamps, looping_animation_wraps, non_looping_clamps_and_stops, pause_freezes_the_frame}` | PASS |
+| FR-054 | monster-core::mesh + gl3d | `mesh::tests::{cube_mesh_shape, obj_parses_vertices_and_faces, obj_negative_and_relative_indices, obj_errors_are_descriptive, cube_first_triangle_front_face}`, `gl3d::tests::draw_mesh_counts_in_unbound_mode` | PASS |
+| FR-055 | monster-engine::examples | `logs/sandbox-game.log`: exit 0 — player_x 497.7 (moved), anim_frames_seen > 2, score = 3, camera_followed; regression `logs/sandbox-physics.log` + `logs/sandbox-classic.log` | PASS |
+
 ## Quy tắc bảo trì
 
 - Mỗi FR mới MUST có ít nhất một test thật trước khi đánh dấu ✅.
