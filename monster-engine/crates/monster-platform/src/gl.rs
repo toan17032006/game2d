@@ -37,6 +37,7 @@ extern "system" {
     fn glBegin(mode: u32);
     fn glEnd();
     fn glColor3f(red: f32, green: f32, blue: f32);
+    fn glNormal3f(nx: f32, ny: f32, nz: f32);
     fn glVertex3f(x: f32, y: f32, z: f32);
 }
 
@@ -311,6 +312,12 @@ pub fn color3(r: f32, g: f32, b: f32) {
     }
 }
 
+pub fn normal3(x: f32, y: f32, z: f32) {
+    unsafe {
+        glNormal3f(x, y, z);
+    }
+}
+
 pub fn vertex3(x: f32, y: f32, z: f32) {
     unsafe {
         glVertex3f(x, y, z);
@@ -327,8 +334,6 @@ pub fn no_gl_error() -> bool {
 // with wglGetProcAddress while a context is current. Every pointer is
 // null-guarded; when anything is missing the renderer falls back to
 // fixed-function (glColor path).
-
-pub(crate) type WglGetProcAddressFn = unsafe extern "system" fn(*const u8) -> *mut c_void;
 
 #[link(name = "opengl32")]
 extern "system" {
@@ -359,7 +364,7 @@ static MODERN: std::sync::OnceLock<Option<ModernFns>> = std::sync::OnceLock::new
 /// driver does not support shaders) - callers must fall back.
 pub fn load_modern_functions() -> bool {
     MODERN
-        .get_or_init(|| unsafe {
+        .get_or_init(|| {
             let fetch = |name: &str| -> usize {
                 let mut cname = name.as_bytes().to_vec();
                 cname.push(0);

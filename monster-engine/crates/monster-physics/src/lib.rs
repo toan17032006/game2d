@@ -116,6 +116,96 @@ pub use shape::{ColliderShape2, CompoundChild, Contact2, CustomShape2, Transform
 pub use vehicle::Vehicle2;
 pub use world::{CharacterMoveResult, PhysicsEvent2, PhysicsWorld2};
 
+/// Axis-aligned bounding box in 3D (M3: physics 3D foundation).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Aabb3 {
+    pub min: monster_math::Vec3,
+    pub max: monster_math::Vec3,
+}
+
+impl Aabb3 {
+    pub fn new(min: monster_math::Vec3, max: monster_math::Vec3) -> Aabb3 {
+        debug_assert!(
+            max.x >= min.x && max.y >= min.y && max.z >= min.z,
+            "Aabb3 min must be <= max"
+        );
+        Aabb3 { min, max }
+    }
+
+    pub fn from_center_half(center: monster_math::Vec3, half: monster_math::Vec3) -> Aabb3 {
+        Aabb3 {
+            min: center - half,
+            max: center + half,
+        }
+    }
+
+    pub fn center(&self) -> monster_math::Vec3 {
+        (self.min + self.max) * 0.5
+    }
+
+    pub fn half_extents(&self) -> monster_math::Vec3 {
+        (self.max - self.min) * 0.5
+    }
+
+    pub fn contains(&self, p: monster_math::Vec3) -> bool {
+        p.x >= self.min.x
+            && p.x <= self.max.x
+            && p.y >= self.min.y
+            && p.y <= self.max.y
+            && p.z >= self.min.z
+            && p.z <= self.max.z
+    }
+
+    pub fn intersects(&self, other: &Aabb3) -> bool {
+        self.min.x <= other.max.x
+            && self.max.x >= other.min.x
+            && self.min.y <= other.max.y
+            && self.max.y >= other.min.y
+            && self.min.z <= other.max.z
+            && self.max.z >= other.min.z
+    }
+
+    /// Minimal translation vector (MTV) on the smallest-penetration axis.
+    pub fn separation(&self, other: &Aabb3) -> Option<monster_math::Vec3> {
+        let overlaps = [
+            (
+                other.max.x - self.min.x,
+                monster_math::Vec3::new(1.0, 0.0, 0.0),
+            ),
+            (
+                self.max.x - other.min.x,
+                monster_math::Vec3::new(-1.0, 0.0, 0.0),
+            ),
+            (
+                other.max.y - self.min.y,
+                monster_math::Vec3::new(0.0, 1.0, 0.0),
+            ),
+            (
+                self.max.y - other.min.y,
+                monster_math::Vec3::new(0.0, -1.0, 0.0),
+            ),
+            (
+                other.max.z - self.min.z,
+                monster_math::Vec3::new(0.0, 0.0, 1.0),
+            ),
+            (
+                self.max.z - other.min.z,
+                monster_math::Vec3::new(0.0, 0.0, -1.0),
+            ),
+        ];
+        for &(amount, _) in &overlaps {
+            if amount < 0.0 {
+                return None; // separated on this axis
+            }
+        }
+        let best = overlaps
+            .iter()
+            .cloned()
+            .min_by(|a, b| a.0.partial_cmp(&b.0).unwrap())?;
+        Some(best.1 * best.0)
+    }
+}
+
 /// Euler integration step: `pos += vel * dt`.
 pub fn integrate(pos: &mut Vec2, vel: Vec2, dt: f32) {
     *pos += vel * dt;
@@ -160,6 +250,39 @@ pub fn find_collisions(boxes: &[Aabb2]) -> Vec<CollisionPair> {
         }
     }
     pairs
+}
+
+#[cfg(test)]
+mod aabb3_tests {
+    use super::*;
+    use monster_math::{approx_eq, Vec3};
+
+    #[test]
+    fn aabb3_intersects_and_contains() {
+        let a = Aabb3::from_center_half(Vec3::new(0.0, 0.0, 0.0), Vec3::new(5.0, 5.0, 5.0));
+        let b = Aabb3::from_center_half(Vec3::new(6.0, 0.0, 0.0), Vec3::new(2.0, 2.0, 2.0));
+        assert!(a.intersects(&b)); // x overlap [4, 5]
+        assert!(a.contains(Vec3::new(1.0, 1.0, 1.0)));
+        assert!(!a.contains(Vec3::new(6.0, 0.0, 0.0)));
+        let far = Aabb3::from_center_half(Vec3::new(50.0, 50.0, 50.0), Vec3::ONE);
+        assert!(!a.intersects(&far));
+    }
+
+    #[test]
+    fn aabb3_separation_smallest_axis() {
+        // deep x overlap (20), shallow y overlap (2) -> move on y
+        let a = Aabb3::from_center_half(Vec3::new(0.0, 0.0, 0.0), Vec3::new(10.0, 2.0, 10.0));
+        let b = Aabb3::from_center_half(Vec3::new(0.0, 3.0, 0.0), Vec3::new(10.0, 2.0, 10.0));
+        let mtv = a.separation(&b).unwrap();
+        assert!(approx_eq(mtv.y, -1.0, 1e-5));
+        assert!(approx_eq(mtv.x, 0.0, 1e-5));
+        assert!(approx_eq(mtv.z, 0.0, 1e-5));
+        let none = a.separation(&Aabb3::from_center_half(
+            Vec3::new(50.0, 50.0, 50.0),
+            Vec3::ONE,
+        ));
+        assert!(none.is_none());
+    }
 }
 
 #[cfg(test)]

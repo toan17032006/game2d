@@ -173,8 +173,14 @@ impl Renderer3D for Gl3DRenderer {
             let (r, g, b, _) = color.to_f32_tuple();
             gl::color3(r, g, b);
             gl::begin_triangles();
+            let has_normals = !mesh.normals.is_empty();
             for &index in &mesh.indices {
                 let v = mesh.vertices[index as usize];
+                if has_normals {
+                    if let Some(n) = mesh.normals.get(index as usize) {
+                        gl::normal3(n.x, n.y, n.z);
+                    }
+                }
                 gl::vertex3(v.x, v.y, v.z);
             }
             gl::end();

@@ -33,6 +33,8 @@ const WAVE_MAPPER: u32 = 0xFFFF_FFFF;
 const WAVE_FORMAT_PCM: u16 = 1;
 const CALLBACK_NULL: u32 = 0;
 const WHDR_PREPARED: u32 = 0x0000_0010;
+// reserved for lazy unprepare polling (foundation keeps eager reset)
+#[allow(dead_code)]
 const WAVERR_STILL_PLAYING: u32 = 33;
 
 /// WAVEFORMATEX (PCM).
@@ -62,6 +64,8 @@ struct WAVEHDR {
 }
 
 /// One in-flight playback: the header + its owned PCM buffer.
+/// (buffer/volume/looped model real device state; read on diagnostics paths.)
+#[allow(dead_code)]
 struct ActivePlayback {
     id: AudioPlaybackId,
     header: WAVEHDR,

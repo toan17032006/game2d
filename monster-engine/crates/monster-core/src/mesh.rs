@@ -10,6 +10,8 @@ use monster_math::Vec3;
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Mesh3D {
     pub vertices: Vec<Vec3>,
+    /// Optional per-normal list (OBJ `vn` lines, declaration order).
+    pub normals: Vec<Vec3>,
     /// Triangle indices into `vertices` (triples).
     pub indices: Vec<u32>,
 }
@@ -18,6 +20,7 @@ impl Mesh3D {
     /// Unit cube centred at the origin: 8 vertices / 12 triangles.
     pub fn cube(half: f32) -> Mesh3D {
         Mesh3D {
+            normals: Vec::new(),
             vertices: vec![
                 Vec3::new(-half, -half, half),  // 0 front-bottom-left
                 Vec3::new(half, -half, half),   // 1 front-bottom-right
@@ -67,11 +70,29 @@ impl Mesh3D {
                     mesh.vertices
                         .push(Vec3::new(coords[0], coords[1], coords[2]));
                 }
+                Some("vn") => {
+                    let coords: Result<Vec<f32>, _> =
+                        tokens.take(3).map(|t| t.parse::<f32>()).collect();
+                    let coords = coords
+                        .map_err(|_| format!("line {}: invalid normal coordinate", line_no + 1))?;
+                    if coords.len() != 3 {
+                        return Err(format!("line {}: normal needs 3 coordinates", line_no + 1));
+                    }
+                    mesh.normals
+                        .push(Vec3::new(coords[0], coords[1], coords[2]));
+                }
                 Some("f") => {
-                    let idx: Result<Vec<i64>, _> = tokens.map(|t| t.parse::<i64>()).collect();
-                    let idx =
-                        idx.map_err(|_| format!("line {}: invalid face index", line_no + 1))?;
-                    if idx.len() < 3 {
+                    // face token forms: "i", "i/j", "i//k", "i/j/k" — the
+                    // vertex index is everything before the first '/'
+                    let mut vertex_idx: Vec<i64> = Vec::new();
+                    for token in tokens {
+                        let head = token.split('/').next().unwrap_or(token);
+                        let i: i64 = head
+                            .parse()
+                            .map_err(|_| format!("line {}: invalid face index", line_no + 1))?;
+                        vertex_idx.push(i);
+                    }
+                    if vertex_idx.len() < 3 {
                         return Err(format!("line {}: face needs >= 3 indices", line_no + 1));
                     }
                     // resolve + fan triangulate
@@ -83,10 +104,10 @@ impl Mesh3D {
                         }
                         Ok(resolved as u32)
                     };
-                    for k in 1..idx.len() - 1 {
-                        mesh.indices.push(resolve(idx[0])?);
-                        mesh.indices.push(resolve(idx[k])?);
-                        mesh.indices.push(resolve(idx[k + 1])?);
+                    for k in 1..vertex_idx.len() - 1 {
+                        mesh.indices.push(resolve(vertex_idx[0])?);
+                        mesh.indices.push(resolve(vertex_idx[k])?);
+                        mesh.indices.push(resolve(vertex_idx[k + 1])?);
                     }
                 }
                 _ => {} // vn/vt/o/g/usemtl... ignored by this loader
@@ -140,6 +161,18 @@ mod tests {
         assert!(Mesh3D::from_obj("v 0 0 0\nf 1 2 9").is_err()); // out of range
         assert!(Mesh3D::from_obj("# nothing").is_err()); // no vertices
         assert!(Mesh3D::from_obj("v 0 0 0").is_err()); // no faces
+    }
+
+    #[test]
+    fn obj_parses_vn_and_v_vn_faces() {
+        let obj = "vn 0 0 1\nvn 0 1 0\nv 0 0 0\nv 1 0 0\nv 1 1 0\nf 1//2 2//1 3//2\n";
+        let m = Mesh3D::from_obj(obj).expect("parse");
+        assert_eq!(m.vertices.len(), 3);
+        assert_eq!(
+            m.normals,
+            vec![Vec3::new(0.0, 0.0, 1.0), Vec3::new(0.0, 1.0, 0.0)]
+        );
+        assert_eq!(m.indices, vec![0, 1, 2]);
     }
 
     #[test]

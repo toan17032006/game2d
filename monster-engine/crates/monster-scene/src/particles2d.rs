@@ -75,7 +75,7 @@ impl ParticleEmitter2D {
             } else {
                 0.0
             };
-            let angle = self.direction.y.atan2(self.direction.x) + step;
+            let angle = direction.y.atan2(direction.x) + step;
             let dir = Vec2::new(angle.cos(), angle.sin());
             self.particles.push(Particle2D {
                 position,
