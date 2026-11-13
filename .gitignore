@@ -1,3 +1,6 @@
 .freebuff/
 *.log
 *.err
+._.DS_Store
+._Particle FX
+.DS_Store
