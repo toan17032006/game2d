@@ -10,10 +10,14 @@
 
 pub mod animation;
 pub mod components;
+pub mod particles2d;
 pub mod systems;
+pub mod tilemap;
 pub mod world;
 
 pub use animation::{sprite_animation_system, AnimationClip, Animator};
 pub use components::{Sprite, Transform, Velocity, ZOrder};
+pub use particles2d::{particle_emit_system, Particle2D, ParticleEmitter2D};
 pub use systems::{camera_follow_system, movement_system, sprite_draw_order};
+pub use tilemap::{spawn_tilemap, Tile, TileSpawnResult};
 pub use world::{EntityBuilder, EntityId, World};

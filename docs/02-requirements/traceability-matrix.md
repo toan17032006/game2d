@@ -113,6 +113,15 @@ Truy vết hai chiều: requirement → module hiện thực → test kiểm ch�
 | FR-054 | monster-core::mesh + gl3d | `mesh::tests::{cube_mesh_shape, obj_parses_vertices_and_faces, obj_negative_and_relative_indices, obj_errors_are_descriptive, cube_first_triangle_front_face}`, `gl3d::tests::draw_mesh_counts_in_unbound_mode` | PASS |
 | FR-055 | monster-engine::examples | `logs/sandbox-game.log`: exit 0 — player_x 497.7 (moved), anim_frames_seen > 2, score = 3, camera_followed; regression `logs/sandbox-physics.log` + `logs/sandbox-classic.log` | PASS |
 
+## Ma trận FR M4 slice 2 (TASK-20261114-004)
+
+| FR | Module (crate) | Test kiểm chứng | Test result |
+| --- | --- | --- | --- |
+| FR-056 | monster-render::text | `text::tests::{glyphs_are_three_wide_five_tall, text_metrics, draw_text_writes_pixels, draw_text_respects_scale_and_advances}` | PASS |
+| FR-057 | monster-scene::tilemap | `tilemap::tests::{spawns_solids_skips_empty, all_empty_spawns_nothing}` + sandbox --game (11 walls) | PASS |
+| FR-058 | monster-scene::particles2d | `particles2d::tests::{burst_spawns_and_particles_move_and_die, continuous_rate_spawns_over_time, color_lerps_over_lifetime}` + sandbox coin sparks | PASS |
+| FR-059 | monster-platform::winmm_audio | `winmm_audio::tests::{construction_reports_device_presence, play_stop_state_machine_with_or_without_device, waveformatex_layout}` + sandbox --game audio blip (winmm/Null fallback) | PASS |
+
 ## Quy tắc bảo trì
 
 - Mỗi FR mới MUST có ít nhất một test thật trước khi đánh dấu ✅.

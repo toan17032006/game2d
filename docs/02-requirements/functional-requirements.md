@@ -127,6 +127,15 @@ Yêu cầu hệ vật lý đầy đủ theo taxonomy người dùng đặt ra. Q
 | FR-054 | Mesh loading (M3 slice 2): `Mesh3D` (vertices/indices, cube builder) + OBJ loader thuần (v/f, fan triangulation, negative indices, lỗi có mô tả) + `Renderer3D::draw_mesh` (mock đếm + GL immediate triangles) | Must | cube 8 verts/12 tris; OBJ fixture parse indices đúng; lỗi OBJ (thiếu tọa độ, face 2 index, index ngoài range) → Err mô tả; draw_mesh unbound đếm 1 | monster-core::mesh + gl3d | ✅ |
 | FR-055 | Tiny Swords game slice: sandbox `--game` — Character player (move_and_slide, input A/D hoặc auto-walk headless) + Warrior_Run animation (grid-slice từ PNG thật) + camera follow + 3 coin Area (score) | Must | headless exit 0: player đi > 150px, animation đổi frame > 2 lần, score = 3/3 coins, camera follow (di chuyển theo player), demo gốc + --physics không regression | monster-engine::examples | ✅ |
 
+## FR — M4 slice 2: HUD + tilemap + particles + audio (TASK-20261114-004)
+
+| ID | Yêu cầu | Priority | Acceptance criteria | Module | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| FR-056 | Text HUD: blocky bitmap font 3×5 (0-9, A-Z, punctuation gọn) + `draw_text_screen` (screen-space, integer scale, uppercase-insensitive, ký tự lạ → space); `Renderer` trait default no-op | Must | glyphs ≤ 3 bits/hàng; text_width/height đúng; draw_text ghi pixel trong glyph box; scale + advance đúng | monster-render::text | ✅ |
+| FR-057 | Tilemap: `spawn_tilemap` grid {Empty, Solid} → sprite entity + static body per Solid (pairs trả về cho bridge), Empty bỏ qua | Must | 2/4 solid → 2 entity + 2 body đúng vị trí; all-empty → 0 | monster-scene::tilemap | ✅ |
+| FR-058 | Particles 2D: `ParticleEmitter2D` (burst + continuous rate, cone spread, gravity, lifetime, color lerp) + `particle_emit_system` + engine render pass vẽ draw_rect world-space | Must | burst 8 hạt → di chuyển → chết hết sau lifetime; continuous rate 10/s sinh > 5; color lerp trắng→đen midpoint xám | monster-scene::particles2d | ✅ |
+| FR-059 | Audio playback thật: winmm FFI (`waveOut*`) + `WinmmAudioBackend` implement `AudioBackend` (mono PCM16, volume, lazy device open, reset/unprepare cleanup); thiếu device → constructor lỗi mô tả → fallback Null | Must | link winmm; construction báo device count; play/stop/stop_all state machine PASS (hoặc skip-graceful khi không device); sandbox --game dùng winmm/Null | monster-platform::winmm_audio | ✅ |
+
 ## References
 
 - `/docs/02-requirements/non-functional-requirements.md`

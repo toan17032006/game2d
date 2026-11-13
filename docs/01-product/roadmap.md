@@ -22,7 +22,8 @@ Lộ trình phát triển theo milestone. Mỗi milestone có đầu ra kiểm c
 | — M3 tiếp theo | Modern GL context (extension loader + shaders), mesh loading, physics 3D (Aabb3), Engine loop 3D tích hợp | ⬜ |
 | **M4 — Feature game 2D** | Sprite animation (spritesheet Tiny Swords), tilemap, particle, text, camera follow/shake, audio playback thật, UI-less menu flow | 🔶 Đang làm |
 | — M4 slice 1 ✅ | Sprite animation (grid-slice + Animator + system) + camera follow + Tiny Swords Warrior_Run integration + coin collect mini-game (--game) — TASK-20261114-003 | ✅ |
-| — M4 tiếp theo | Tilemap, particle, text, audio playback thật | ⬜ |
+| — M4 slice 2 ✅ | Text HUD (bitmap font 3×5), tilemap spawn (walls), particle emitter 2D (burst/lifetime/color lerp), audio playback thật (winmm waveOut FFI, fallback Null) — TASK-20261114-004 | ✅ |
+| — M4 tiếp theo | Tilemap đầy đủ (multi-layer, culling), particle-collision, music streaming | ⬜ |
 | **M5 — Game hoàn chỉnh đầu tiên** | Đóng gói một game hoàn chỉnh trên asset Tiny Swords (chạy window mode, có âm thanh) | ⬜ Chưa bắt đầu |
 
 ## Chi tiết M3 (mục tiêu kế tiếp)

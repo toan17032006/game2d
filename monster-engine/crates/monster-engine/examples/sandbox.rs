@@ -44,6 +44,7 @@ struct SandboxGame {
     anim_frames_seen: u32,
     last_anim_frame: usize,
     camera_moved: bool,
+    hud_enabled: bool,
 }
 
 impl SandboxGame {
@@ -182,6 +183,48 @@ impl SandboxGame {
             physics_attach(&mut ctx.world, coin_entity, coin);
             self.coin_entities.push(coin_entity);
         }
+
+        // decorative emitter on the player (coin bursts are pushed here)
+        ctx.world
+            .get_mut::<Transform>(player_entity)
+            .map(|t| t.position)
+            .unwrap_or_default();
+        ctx.world.spawn().with(Transform::at(Vec2::ZERO)).build(); // anchor (unused visual)
+
+        // tilemap walls bounding the play area (x = -900..900 band)
+        let wall_tex =
+            Self::make_sprite_texture(ctx.assets, "game_wall", Color::opaque(120, 90, 60));
+        let mut walls = Vec::new();
+        for x in -960..960i32 {
+            if (32..967).contains(&(x + 32)) {
+                continue; // leave the play band open below; walls above ground
+            }
+            walls.push(Tile::Solid);
+        }
+        let _ = walls;
+        let wall_row: Vec<Tile> = (0..30)
+            .map(|i| {
+                if i < 6 || i > 24 {
+                    Tile::Solid
+                } else {
+                    Tile::Empty
+                }
+            })
+            .collect();
+        let (r, pairs) = spawn_tilemap(
+            &mut ctx.world,
+            physics,
+            wall_tex,
+            32.0,
+            Vec2::new(-480.0, 80.0),
+            30,
+            1,
+            &wall_row,
+        );
+        for (entity, body) in pairs {
+            physics_attach(&mut ctx.world, entity, body);
+        }
+        log_info!("game: tilemap walls spawned: {} solids", r.solid_bodies);
 
         ctx.camera.position = Vec2::new(-200.0, 150.0);
         log_info!("game: player + 3 coins + camera follow ready");
@@ -332,6 +375,15 @@ impl GameApp for SandboxGame {
                                 t.position = Vec2::new(0.0, -5000.0);
                             }
                         }
+                        // spark burst on the player's emitter + coin blip
+                        let coin_pos = physics.bodies[body].transform.position;
+                        if let Some(player) = self.player_entity {
+                            if let Some(emitter) = ctx.world.get_mut::<ParticleEmitter2D>(player) {
+                                emitter.burst(coin_pos, Vec2::new(0.0, -1.0), 10);
+                            }
+                        }
+                        ctx.audio
+                            .play_clip(&AudioClip::sine(22050, 880.0, 0.15, 9000), 0.6, false);
                     }
                 }
             }
@@ -448,8 +500,17 @@ impl GameApp for SandboxGame {
         }
     }
 
-    fn render(&mut self, _ctx: &mut RenderContext<'_>) {
+    fn render(&mut self, ctx: &mut RenderContext<'_>) {
         self.frames_rendered += 1;
+        if self.game_mode && self.hud_enabled {
+            ctx.renderer.draw_text_screen(
+                16.0,
+                12.0,
+                &format!("SCORE {}", self.score),
+                Color::WHITE,
+                3,
+            );
+        }
     }
 }
 
@@ -504,8 +565,22 @@ fn main() {
     };
     builder = builder.with_fixed_fps(60);
 
+    // audio: real playback (winmm) in window/game mode; Null headless
+    let audio_backend: Box<dyn AudioBackend> = if open_window || game_mode {
+        match monster_platform::WinmmAudioBackend::new() {
+            Ok(b) => Box::new(b),
+            Err(e) => {
+                log_warn!("winmm unavailable ({e}) — using Null audio");
+                Box::new(NullAudioBackend::default())
+            }
+        }
+    } else {
+        Box::new(NullAudioBackend::default())
+    };
+    builder = builder.with_audio_backend(audio_backend);
     let mut engine = builder.build().expect("engine build");
     let mut game = SandboxGame {
+        hud_enabled: game_mode,
         headless_frame_limit: if game_mode {
             headless_frames
         } else if physics_mode {

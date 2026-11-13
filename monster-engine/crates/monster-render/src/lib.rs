@@ -12,6 +12,7 @@
 
 pub mod framebuffer;
 pub mod software;
+pub mod text;
 
 pub use framebuffer::Framebuffer;
 pub use software::Software2DRenderer;

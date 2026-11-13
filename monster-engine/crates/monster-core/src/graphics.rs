@@ -179,6 +179,18 @@ pub trait Renderer {
 
     /// Number of draw items issued in the current/last frame (for stats).
     fn draw_count(&self) -> u32;
+
+    /// HUD text in screen space — default no-op; 2D raster backends
+    /// override this (e.g. bitmap-font blitting into the framebuffer).
+    fn draw_text_screen(
+        &mut self,
+        _x: f32,
+        _y: f32,
+        _text: &str,
+        _color: monster_math::Color,
+        _scale: u32,
+    ) {
+    }
 }
 
 #[cfg(test)]

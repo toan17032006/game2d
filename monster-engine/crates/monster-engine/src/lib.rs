@@ -60,11 +60,13 @@ pub mod prelude {
         bounce, find_collisions, integrate, Aabb2, BodyKind2, ColliderShape2, CollisionPair,
         PhysicsBody2, PhysicsWorld2,
     };
+    pub use monster_platform::WinmmAudioBackend;
     pub use monster_platform::{NullWindow, PlatformWindow, Window, WindowOptions};
     pub use monster_render::Software2DRenderer;
     pub use monster_scene::{
-        camera_follow_system, movement_system, sprite_animation_system, sprite_draw_order,
-        AnimationClip, Animator, EntityId, Sprite, Transform, Velocity, World, ZOrder,
+        camera_follow_system, movement_system, particle_emit_system, spawn_tilemap,
+        sprite_animation_system, sprite_draw_order, AnimationClip, Animator, EntityId, Particle2D,
+        ParticleEmitter2D, Sprite, Tile, Transform, Velocity, World, ZOrder,
     };
 
     pub use crate::engine::{

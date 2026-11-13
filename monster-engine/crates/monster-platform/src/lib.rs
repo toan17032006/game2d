@@ -16,7 +16,9 @@ pub mod ffi;
 pub mod gl;
 pub mod keymap;
 pub mod window;
+pub mod winmm_audio;
 
 pub use gl::GlContext;
 pub use keymap::vk_to_keycode;
 pub use window::{NullWindow, PlatformError, PlatformWindow, Window, WindowOptions};
+pub use winmm_audio::WinmmAudioBackend;
