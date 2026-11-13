@@ -158,6 +158,12 @@ Yêu cầu hệ vật lý đầy đủ theo taxonomy người dùng đặt ra. Q
 | FR-067 | Engine 3D integration: `GameApp::render_3d` (default no-op) + `EngineBuilder::with_3d()` + `RenderContext3D` + `Camera3D` trong InitContext; Gl3DRenderer bound khi window mode, unbound khi headless | Must | engine tests 205 PASS (render_3d default no-op không break); game --game exit 0; build + examples compile | monster-engine::engine | ✅ |
 | FR-068 | Music WAV loading: `load_wav_file` + `play_clip(clip, vol, looped=true)` qua winmm backend | Should | game mode play music loop; skip-graceful khi không device | monster-audio + monster-engine | ✅ |
 
+## FR — Character jump + platforms (TASK-20261114-009)
+
+| ID | Yêu cầu | Priority | Acceptance criteria | Module | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| FR-069 | Character jump (Space/W/Up → velocity.y = -400 khi on_floor) + platform collision (tilemap Solid tiles chặn qua move_and_slide depenetration) + level design với platforms ở 3 độ cao | Must | game --headless exit 0 — score=3, won=2, player di chuyển + jump; tilemap 7 walls + 10 platforms spawned | /game/src/main.rs | ✅ |
+
 ## References
 
 - `/docs/02-requirements/non-functional-requirements.md`

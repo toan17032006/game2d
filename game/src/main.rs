@@ -62,6 +62,10 @@ struct SandboxGame {
     last_anim_frame: usize,
     camera_moved: bool,
     hud_enabled: bool,
+    /// Platformer vertical velocity (managed by game code).
+    player_vy: f32,
+    /// Whether the player is on a floor surface.
+    on_floor: bool,
 }
 
 impl SandboxGame {
@@ -237,40 +241,66 @@ impl SandboxGame {
             .unwrap_or_default();
         ctx.world.spawn().with(Transform::at(Vec2::ZERO)).build(); // anchor (unused visual)
 
-        // tilemap walls bounding the play area (x = -900..900 band)
+        // tilemap: side walls + platforms at different heights
         let wall_tex =
             Self::make_sprite_texture(ctx.assets, "game_wall", Color::opaque(120, 90, 60));
-        let mut walls = Vec::new();
-        for x in -960..960i32 {
-            if (32..967).contains(&(x + 32)) {
-                continue; // leave the play band open below; walls above ground
-            }
-            walls.push(Tile::Solid);
-        }
-        let _ = walls;
+        let plat_tex =
+            Self::make_sprite_texture(ctx.assets, "game_plat", Color::opaque(140, 110, 70));
+
+        // side walls (prevent leaving the play area)
         let wall_row: Vec<Tile> = (0..30)
             .map(|i| {
-                if i < 6 || i > 24 {
+                if i < 4 || i > 26 {
                     Tile::Solid
                 } else {
                     Tile::Empty
                 }
             })
             .collect();
-        let (r, pairs) = spawn_tilemap(
+        let (wr, wpairs) = spawn_tilemap(
             &mut ctx.world,
             physics,
             wall_tex,
             32.0,
-            Vec2::new(-480.0, 80.0),
+            Vec2::new(-480.0, GROUND_Y - 32.0),
             30,
             1,
             &wall_row,
         );
-        for (entity, body) in pairs {
+        for (entity, body) in wpairs {
             physics_attach(&mut ctx.world, entity, body);
         }
-        log_info!("game: tilemap walls spawned: {} solids", r.solid_bodies);
+
+        // platforms the player can jump onto (3 heights)
+        let platforms: Vec<(f32, f32, usize)> = vec![
+            (-300.0, GROUND_Y - 64.0, 4),
+            (50.0, GROUND_Y - 96.0, 3),
+            (350.0, GROUND_Y - 128.0, 3),
+        ];
+        let mut plat_count = 0;
+        for (px, py, wide) in &platforms {
+            let tiles: Vec<Tile> = (0..*wide).map(|_| Tile::Solid).collect();
+            let (pr, ppairs) = spawn_tilemap(
+                &mut ctx.world,
+                physics,
+                plat_tex,
+                32.0,
+                Vec2::new(*px, *py),
+                *wide,
+                1,
+                &tiles,
+            );
+            for (entity, body) in ppairs {
+                physics_attach(&mut ctx.world, entity, body);
+            }
+            plat_count += pr.solid_bodies;
+        }
+
+        log_info!(
+            "game: tilemap {} wall solids + {} platform solids",
+            wr.solid_bodies,
+            plat_count
+        );
 
         // background music loop (winmm plays with speakers; Null headless)
         let music = AudioClip::sine(22050, 220.0, 2.0, 3000);
@@ -464,9 +494,23 @@ impl GameApp for SandboxGame {
                 0.0
             };
 
-            // drive the character (engine already stepped physics bodies)
+            // platformer character controller: gravity + jump + move
+            self.player_vy += 980.0 * ctx.dt;
+            let jump_pressed = ctx.input.was_pressed(KeyCode::Space)
+                || ctx.input.was_pressed(KeyCode::W)
+                || ctx.input.was_pressed(KeyCode::Up);
+            if jump_pressed && self.on_floor {
+                self.player_vy = -400.0;
+            }
+            self.player_vy = self.player_vy.min(500.0); // terminal velocity
+
             if let Some(physics) = ctx.physics.as_mut() {
-                physics.move_and_slide(self.player_body, Vec2::new(move_x, 200.0), ctx.dt);
+                let res = physics.move_and_slide(
+                    self.player_body,
+                    Vec2::new(move_x, self.player_vy),
+                    ctx.dt,
+                );
+                self.on_floor = res.floor;
                 // collect coins: player overlapping an Area body
                 for (i, &body) in self.coin_bodies.iter().enumerate() {
                     if self.coin_collected[i] {
@@ -742,6 +786,8 @@ fn main() {
         anim_frames_seen: 0,
         last_anim_frame: 0,
         camera_moved: false,
+        player_vy: 0.0,
+        on_floor: false,
     };
 
     let result = engine.run(&mut game);

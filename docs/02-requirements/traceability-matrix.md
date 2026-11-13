@@ -144,6 +144,12 @@ Truy vết hai chiều: requirement → module hiện thực → test kiểm ch�
 | FR-067 | monster-engine::engine + gl3d | `engine.rs` render_3d default no-op + `with_3d` builder + engine tests 205 PASS | PASS |
 | FR-068 | monster-audio + monster-engine | `wav::tests::load_wav_file_roundtrip` + game run exit 0 (`logs/game-run.log`) | PASS |
 
+## Ma trận FR Jump + platforms (TASK-20261114-009)
+
+| FR | Module | Test kiểm chứng | Test result |
+| --- | --- | --- | --- |
+| FR-069 | /game/src/main.rs | `logs/game-run.log`: exit 0 — score=3, won=2, 7 walls + 10 platforms, moved=true | PASS |
+
 ## Quy tắc bảo trì
 
 - Mỗi FR mới MUST có ít nhất một test thật trước khi đánh dấu ✅.
