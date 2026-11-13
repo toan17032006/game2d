@@ -329,7 +329,7 @@ impl PhysicsWorld2 {
                 any = true;
                 hit = true;
                 // contact.normal points from self → other; push self out along -normal
-                let mut n = -contact.normal;
+                let n = -contact.normal;
                 if let Some(want) = floor_normal {
                     if n.dot(want) < 0.5 {
                         continue; // not the direction we asked about

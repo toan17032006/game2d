@@ -9,7 +9,8 @@ use monster_core::graphics::{Camera2D, DrawOptions, Renderer};
 use monster_core::input::InputState;
 use monster_core::log_info;
 use monster_core::time::FixedClock;
-use monster_math::{Color, Rect};
+use monster_math::{Color, Rect, Vec2};
+use monster_physics::world::PhysicsWorld2;
 use monster_platform::{NullWindow, PlatformWindow, Window, WindowOptions};
 use monster_render::Software2DRenderer;
 use monster_scene::{sprite_draw_order, World};
@@ -20,6 +21,8 @@ pub struct InitContext<'a> {
     pub assets: &'a mut Assets,
     pub audio: &'a mut dyn AudioBackend,
     pub camera: &'a mut Camera2D,
+    /// Physics world when enabled via `EngineBuilder::with_physics`.
+    pub physics: Option<&'a mut PhysicsWorld2>,
 }
 
 /// Per-fixed-step update context.
@@ -29,6 +32,8 @@ pub struct UpdateContext<'a> {
     pub input: &'a InputState,
     pub audio: &'a mut dyn AudioBackend,
     pub camera: &'a mut Camera2D,
+    /// Physics world when enabled via `EngineBuilder::with_physics`.
+    pub physics: Option<&'a mut PhysicsWorld2>,
     /// Fixed delta seconds of this step.
     pub dt: f32,
     should_exit: &'a mut bool,
@@ -93,6 +98,8 @@ impl Default for EngineConfig {
 pub struct EngineBuilder {
     config: EngineConfig,
     audio: Option<Box<dyn AudioBackend>>,
+    /// Gravity for the physics world (None = physics disabled).
+    physics_gravity: Option<Vec2>,
 }
 
 impl Default for EngineBuilder {
@@ -106,6 +113,7 @@ impl EngineBuilder {
         EngineBuilder {
             config: EngineConfig::default(),
             audio: None,
+            physics_gravity: None,
         }
     }
 
@@ -137,6 +145,13 @@ impl EngineBuilder {
         self
     }
 
+    /// Enable the physics world with the given gravity vector
+    /// (e.g. `Vec2::new(0.0, 980.0)` for +Y-down screens).
+    pub fn with_physics(mut self, gravity: Vec2) -> EngineBuilder {
+        self.physics_gravity = Some(gravity);
+        self
+    }
+
     /// Assemble the engine.
     pub fn build(self) -> Result<Engine, monster_platform::PlatformError> {
         let window: Box<dyn PlatformWindow> = match &self.config.window {
@@ -163,6 +178,7 @@ impl EngineBuilder {
             audio: self
                 .audio
                 .unwrap_or_else(|| Box::new(monster_audio::NullAudioBackend::new())),
+            physics: self.physics_gravity.map(PhysicsWorld2::new),
             events: EventBus::new(),
             world: World::new(),
             input: InputState::new(),
@@ -193,6 +209,7 @@ pub struct Engine {
     camera: Camera2D,
     assets: Assets,
     audio: Box<dyn AudioBackend>,
+    physics: Option<PhysicsWorld2>,
     events: EventBus,
     world: World,
     input: InputState,
@@ -211,6 +228,11 @@ impl Engine {
         &self.assets
     }
 
+    /// Read-only physics access (None when physics is disabled).
+    pub fn physics(&self) -> Option<&PhysicsWorld2> {
+        self.physics.as_ref()
+    }
+
     /// Run the game until the window closes or `UpdateContext::exit` fires.
     pub fn run(&mut self, app: &mut dyn GameApp) -> EngineRunResult {
         let started = Instant::now();
@@ -223,6 +245,7 @@ impl Engine {
                 assets: &mut self.assets,
                 audio: &mut *self.audio,
                 camera: &mut self.camera,
+                physics: self.physics.as_mut(),
             };
             app.init(&mut ctx);
         }
@@ -256,12 +279,26 @@ impl Engine {
             let steps = self.clock.tick(Instant::now());
             for _ in 0..steps {
                 let dt = self.clock.fixed_step_secs();
+                // physics: authored bodies follow the scene, simulate, then
+                // physics-owned bodies drive the scene back
+                if self.physics.is_some() {
+                    crate::physics_bridge::sync_static_to_physics(
+                        &self.world,
+                        self.physics.as_mut().unwrap(),
+                    );
+                    self.physics.as_mut().unwrap().step(dt);
+                    crate::physics_bridge::sync_dynamic_to_scene(
+                        self.physics.as_ref().unwrap(),
+                        &mut self.world,
+                    );
+                }
                 let mut ctx = UpdateContext {
                     world: &mut self.world,
                     assets: &mut self.assets,
                     input: &self.input,
                     audio: &mut *self.audio,
                     camera: &mut self.camera,
+                    physics: self.physics.as_mut(),
                     dt,
                     should_exit: &mut self.should_exit,
                 };

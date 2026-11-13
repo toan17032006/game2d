@@ -853,22 +853,6 @@ fn stadium_poly(xf: &Transform2, hl: f32, r: f32, points: &[Vec2]) -> Option<Con
     })
 }
 
-// -- small extensions --------------------------------------------------------
-
-trait NormalizeOr {
-    fn normalize_or(self, fallback: Vec2) -> Vec2;
-}
-impl NormalizeOr for Vec2 {
-    fn normalize_or(self, fallback: Vec2) -> Vec2 {
-        let len = self.length();
-        if len <= 1.0e-9 {
-            fallback
-        } else {
-            self / len
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

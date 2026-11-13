@@ -105,6 +105,12 @@ Yêu cầu hệ vật lý đầy đủ theo taxonomy người dùng đặt ra. Q
 | FR-047 | Raycast API: `Ray2`/`RayHit2` quét world, nearest hit, mọi shape (kể cả heightfield) | Must | ray trúng circle t=80; box face t=90; heightfield t=50; nearest thắng; quá ngắn → None | monster-physics::raycast | ✅ |
 | FR-048 | Custom Collider: trait `CustomShape2` (narrowphase/contains/bound/raycast do user viết) | Must | test custom half-plane: penetration + normal đúng | monster-physics::shape/collision | ✅ |
 
+## FR — Physics Bridge (TASK-20261114-001)
+
+| ID | Yêu cầu | Priority | Acceptance criteria | Module | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| FR-049 | PhysicsBridge đồng bộ ECS ↔ `PhysicsWorld2` qua facade: component `PhysicsLink`, `EngineBuilder::with_physics(gravity)`, `UpdateContext.physics`/`InitContext.physics`; hướng sync: dynamic body → scene Transform, static/kinematic/area → scene → body | Must | integration test: entity rơi theo physics qua `engine.run` (y đọng ≈ body); entity không link không bị đụng; engine không bật physics → ctx.physics = None; sandbox `--physics` exit 0 (240 bước, 6 bóng đọng, sprites khớp body < 1px, 12 trigger events) | monster-engine::physics_bridge | ✅ |
+
 ## References
 
 - `/docs/02-requirements/non-functional-requirements.md`

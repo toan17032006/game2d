@@ -387,7 +387,7 @@ pub(crate) fn particle_vs_world(
         // contact.normal A(particle)→B(solid): particle is pushed along -normal
         let push = -normal;
         let depth = penetration;
-        if best.map(|(bn, bd)| depth > bd).unwrap_or(true) {
+        if best.map(|(_bn, bd)| depth > bd).unwrap_or(true) {
             best = Some((push, depth));
         }
     }

@@ -30,10 +30,14 @@
 //! ```
 
 pub mod engine;
+pub mod physics_bridge;
 
 pub use engine::{
     Engine, EngineBuilder, EngineConfig, EngineRunResult, GameApp, InitContext, RenderContext,
     UpdateContext,
+};
+pub use physics_bridge::{
+    attach as physics_attach, sync_dynamic_to_scene, sync_static_to_physics, PhysicsLink,
 };
 
 /// Convenience re-export of the whole public API surface.
@@ -49,7 +53,10 @@ pub mod prelude {
     pub use monster_core::time::{FixedClock, Stopwatch};
     pub use monster_core::{log_debug, log_error, log_info, log_trace, log_warn};
     pub use monster_math::{Color, Mat4, Quat, Rect, Vec2, Vec3, Vec4};
-    pub use monster_physics::{bounce, find_collisions, integrate, Aabb2, CollisionPair};
+    pub use monster_physics::{
+        bounce, find_collisions, integrate, Aabb2, BodyKind2, ColliderShape2, CollisionPair,
+        PhysicsBody2, PhysicsWorld2,
+    };
     pub use monster_platform::{NullWindow, PlatformWindow, Window, WindowOptions};
     pub use monster_render::Software2DRenderer;
     pub use monster_scene::{
@@ -60,4 +67,6 @@ pub mod prelude {
         Engine, EngineBuilder, EngineConfig, EngineRunResult, GameApp, InitContext, RenderContext,
         UpdateContext,
     };
+    pub use crate::physics_attach;
+    pub use crate::physics_bridge::PhysicsLink;
 }

@@ -8,7 +8,7 @@ use monster_math::Vec2;
 
 use crate::body::{BodyKind2, PhysicsBody2};
 use crate::raycast::{raycast, Ray2};
-use crate::shape::{ColliderShape2, Transform2};
+use crate::shape::ColliderShape2;
 use crate::world::PhysicsWorld2;
 
 /// One wheel of a vehicle.

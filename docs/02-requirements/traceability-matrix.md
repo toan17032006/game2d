@@ -91,6 +91,12 @@ Truy vết hai chiều: requirement → module hiện thực → test kiểm ch�
 | FR-047 | monster-physics::raycast | `raycast::tests::{ray_hits_circle, ray_misses_when_too_short, ray_hits_box_face, ray_hits_heightfield, ray_nearest_hit_wins}` | PASS |
 | FR-048 | monster-physics::shape + collision | `collision::tests::custom_shape_trait_narrowphase` | PASS |
 
+## Ma trận FR Physics Bridge (TASK-20261114-001)
+
+| FR | Module (crate) | Test kiểm chứng | Test result |
+| --- | --- | --- | --- |
+| FR-049 | monster-engine::physics_bridge | `physics_bridge::tests::{dynamic_body_drives_scene_transform, static_scene_transform_drives_body, unlinked_entities_are_untouched}`, `tests/physics_bridge.rs::{physics_bridge_entity_follows_body, engine_without_physics_leaves_context_none}`, sandbox `--physics` (logs) | PASS |
+
 ## Quy tắc bảo trì
 
 - Mỗi FR mới MUST có ít nhất một test thật trước khi đánh dấu ✅.
