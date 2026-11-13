@@ -16,6 +16,7 @@ Lộ trình phát triển theo milestone. Mỗi milestone có đầu ra kiểm c
 | **M0 — Nền tảng tính toán** | `monster-math` (Vec2/3/4, Mat4, Quat, Rect, Color) + `monster-core` (event bus, fixed clock, input, log, trait contracts) | ✅ Hoàn thành (v0.1.0) |
 | **M1 — Hiển thị & tài nguyên** | `monster-platform` (Win32 window/input/GDI) + `monster-render` (software 2D) + `monster-assets` (registry, PNG/BMP) | ✅ Hoàn thành (v0.1.0) |
 | **M2 — Trạng thái game** | `monster-scene` (ECS-lite) + `monster-physics` (AABB) + `monster-audio` (trait + Null + WAV) + facade `EngineBuilder`/`GameApp` + sandbox | ✅ Hoàn thành (v0.1.0) |
+| **M2.5 — Physics v2 (taxonomy đầy đủ)** | 14 loại body + 15 loại collider + joints (Distance/Pin/Weld/Spring) + `PhysicsWorld2` pipeline + raycast + Character move_and_slide + particle systems (Soft/Cloth/Fluid/Particle/Deformable) + Vehicle suspension — FR-032..FR-048 | ✅ Hoàn thành (TASK-20261113-010) |
 | **M3 — Tầng 3D** | GPU backend (implement `Renderer`): mesh, depth buffer, shader qua trait; physics 3D (Aabb3); camera 3D | ⬜ Chưa bắt đầu |
 | **M4 — Feature game 2D** | Sprite animation (spritesheet Tiny Swords), tilemap, particle, text, camera follow/shake, audio playback thật, UI-less menu flow | ⬜ Chưa bắt đầu |
 | **M5 — Game hoàn chỉnh đầu tiên** | Đóng gói một game hoàn chỉnh trên asset Tiny Swords (chạy window mode, có âm thanh) | ⬜ Chưa bắt đầu |

@@ -71,6 +71,17 @@ impl Vec2 {
         }
     }
 
+    /// Normalize with a fallback for zero-length vectors.
+    #[inline]
+    pub fn normalize_or(self, fallback: Vec2) -> Vec2 {
+        let len = self.length();
+        if len <= 1.0e-9 {
+            fallback
+        } else {
+            self / len
+        }
+    }
+
     #[inline]
     pub fn lerp(self, o: Vec2, t: f32) -> Vec2 {
         Vec2::new(crate::lerp(self.x, o.x, t), crate::lerp(self.y, o.y, t))

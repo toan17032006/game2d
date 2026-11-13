@@ -69,6 +69,28 @@ Truy vết hai chiều: requirement → module hiện thực → test kiểm ch�
 | AC-005 (sandbox headless) | FR-031 |
 | AC-006 (ADR draft) | ADR-001 |
 
+## Ma trận FR Physics v2 (TASK-20261113-010)
+
+| FR | Module (crate) | Test kiểm chứng | Test result |
+| --- | --- | --- | --- |
+| FR-032 | monster-physics::world | `world::tests::rigid_falls_and_lands_on_static_ground`, `bouncing_ball_with_restitution` | PASS |
+| FR-033 | monster-physics::shape + collision | `collision::tests::{circle_circle_contact_and_separation, circle_box_contact_normal_flips_with_order, box_box_sat, circle_plane_from_free_side, circle_convex_polygon_and_cone, concave_polygon_via_parts, heightfield_smooth_ground, terrain_blocky_columns, stadium_stadium_and_plane, compound_vs_circle_deepest_contact, wheel_behaves_like_circle}`, `shape::tests::convex_polygon_validates`, `contains_point_shapes`, `plane_solid_side`, `heightfield_and_terrain_containment`, `compound_bound_and_contains` | PASS |
+| FR-034 | monster-physics::world | `world::tests::static_body_infinite_mass_no_response` (body), `rigid_falls_and_lands_on_static_ground` | PASS |
+| FR-035 | monster-physics::world | `world::tests::kinematic_pushes_dynamic`, `animatable_pushes_and_ignores_gravity` | PASS |
+| FR-036 | monster-physics::world | `world::tests::area_trigger_events_fire_and_exit`, `area_is_trigger_by_default` | PASS |
+| FR-037 | monster-physics::world | `raycast::tests::character_move_and_slide_walks_on_floor`, `character_stops_at_wall` | PASS |
+| FR-038 | monster-physics::joint | `joint::tests::bone_body_uses_stadium` | PASS |
+| FR-039 | monster-physics::joint | `joint::tests::articulated_chain_hangs_together` | PASS |
+| FR-040 | monster-physics::particles | `particles::tests::soft_blob_falls_stays_connected` | PASS |
+| FR-041 | monster-physics::particles | `particles::tests::cloth_pinned_top_hangs` | PASS |
+| FR-042 | monster-physics::vehicle | `vehicle::tests::{vehicle_settles_on_suspension, vehicle_drives_forward, suspension_compression_tracks_ground}` | PASS |
+| FR-043 | monster-physics::particles | `particles::tests::particle_cloud_lands_on_ground` | PASS |
+| FR-044 | monster-physics::particles | `particles::tests::fluid_stays_on_ground_and_spreads` | PASS |
+| FR-045 | monster-physics::particles | `particles::tests::deformable_squashes_then_recovers_shape` | PASS |
+| FR-046 | monster-physics::joint | `joint::tests::{distance_joint_holds_length_under_gravity, pin_joint_keeps_anchors_together, weld_locks_relative_angle, spring_pulls_towards_rest_length}` | PASS |
+| FR-047 | monster-physics::raycast | `raycast::tests::{ray_hits_circle, ray_misses_when_too_short, ray_hits_box_face, ray_hits_heightfield, ray_nearest_hit_wins}` | PASS |
+| FR-048 | monster-physics::shape + collision | `collision::tests::custom_shape_trait_narrowphase` | PASS |
+
 ## Quy tắc bảo trì
 
 - Mỗi FR mới MUST có ít nhất một test thật trước khi đánh dấu ✅.

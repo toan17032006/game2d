@@ -81,6 +81,30 @@ Danh mục yêu cầu chức năng của nền móng engine, mỗi yêu cầu c�
 | FR-030 | Engine tự vẽ world sprites (z-sorted) trước app.render; resize đồng bộ camera + framebuffer | Must | renderer.draw_count ≥ 1 trong render callback | monster-engine | ✅ |
 | FR-031 | Sandbox example: `--headless N` exit 0 sau ≥N frames; `--window` mở cửa sổ 960×540 | Must | --headless 120 → 122 frames, exit 0 | monster-engine (example) | ✅ |
 
+## FR — Physics v2 (TASK-20261113-010)
+
+Yêu cầu hệ vật lý đầy đủ theo taxonomy người dùng đặt ra. Quyết định ADR-001 là 2D-first: các shape 3D được ánh xạ tương đương 2D có chủ đích (Sphere→Circle, Capsule/Cylinder→Stadium, Cone→triangle, Mesh→polygon, Terrain→cột khối). Phiên bản 3D thật thuộc M3.
+
+| ID | Yêu cầu | Priority | Acceptance criteria | Module | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| FR-032 | `PhysicsWorld2` pipeline: integrate → broadphase → narrowphase → impulse resolution (restitution + Coulomb friction) + positional correction (Baumgarte) | Must | bi rơi 120 bước đọng trên ground tại y≈180, vy≈0; restitution 0.9 nảy lên > 40px | monster-physics::world | ✅ |
+| FR-033 | 15 loại collider trong `ColliderShape2` (mapping 2D ghi rõ) + narrowphase thật từng cặp qua flatten-to-primitives | Must | test từng loại: circle/box/stadium/cone/plane/convex/concave/heightfield/terrain/compound/wheel/custom đều có contact đúng hướng + độ xuyên đúng | monster-physics::shape/collision | ✅ |
+| FR-034 | Static Body (không di chuyển, inv_mass=0) + Rigid Body (gravity + response) | Must | static không đổi; rigid đọng trên ground | monster-physics::world | ✅ |
+| FR-035 | Kinematic Body + Animatable Body: di chuyển bằng velocity, không bị gravity/response đẩy, ĐẨY được dynamic body | Must | kinematic đẩy rigid > 29px; animatable không rơi | monster-physics::world | ✅ |
+| FR-036 | Area / Trigger Body: phát `TriggerEntered`/`TriggerExited`, không response | Must | visitor đi xuyên area: entered rồi exited; vị trí xuyên suốt không bị chặn | monster-physics::world | ✅ |
+| FR-037 | Character Body: `move_and_slide` tách trục, on-floor/on-ceiling/wall | Must | character đi bộ đọng trên sàn (y≈75); tường chặn x < 85 | monster-physics::world | ✅ |
+| FR-038 | Physical Bone: segment stadium giữa 2 điểm | Must | bone tạo đúng stadium (half_length, radius) | monster-physics::joint | ✅ |
+| FR-039 | Articulated Body: chuỗi bone nối Pin joint với static anchor | Must | chuỗi 4 bone sau 90 bước vẫn dính nhau (khoảng cách < 45px) | monster-physics::joint | ✅ |
+| FR-040 | Soft Body: ring PBD + neighbour/cross springs | Must | blob rơi 120 bước: không lọt ground, không vỡ (spread < 120px) | monster-physics::particles | ✅ |
+| FR-041 | Cloth Body: grid structural+shear springs, pin hàng đầu | Must | pin đứng yên; phần dưới rơi treo > 60px | monster-physics::particles | ✅ |
+| FR-042 | Vehicle Body: chassis + wheel raycast suspension (Hooke + damper) + drive | Must | chassis đọng trên suspension (bottom < ground−5); drive di chuyển > 30px | monster-physics::vehicle | ✅ |
+| FR-043 | Particle Body: point particles độc lập, có velocity clamp chống xuyên | Must | 40 hạt rơi 180 bước đọng trên ground (150..193) | monster-physics::particles | ✅ |
+| FR-044 | Fluid Body: SPH-lite pressure repulsion | Must | khối fluid rơi đọng trên ground và loang rộng hơn ban đầu | monster-physics::particles | ✅ |
+| FR-045 | Deformable Body: shape memory spring về rest offsets | Must | rơi đọng trên ground, hình ring phục hồi ≥ 60% rest width | monster-physics::particles | ✅ |
+| FR-046 | Joints/Constraints: Distance, Pin, Weld, Spring (impulse + Baumgarte, clamp chống nổ) | Must | distance giữ đúng 100px ± 6; pin giữ anchor < 8px; weld khóa góc < 0.3 rad; spring đọng ~rest length | monster-physics::joint | ✅ |
+| FR-047 | Raycast API: `Ray2`/`RayHit2` quét world, nearest hit, mọi shape (kể cả heightfield) | Must | ray trúng circle t=80; box face t=90; heightfield t=50; nearest thắng; quá ngắn → None | monster-physics::raycast | ✅ |
+| FR-048 | Custom Collider: trait `CustomShape2` (narrowphase/contains/bound/raycast do user viết) | Must | test custom half-plane: penetration + normal đúng | monster-physics::shape/collision | ✅ |
+
 ## References
 
 - `/docs/02-requirements/non-functional-requirements.md`

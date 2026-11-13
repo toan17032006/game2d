@@ -98,6 +98,24 @@ impl Aabb2 {
     }
 }
 
+pub mod body;
+pub mod collision;
+pub mod joint;
+pub mod particles;
+pub mod raycast;
+pub mod shape;
+pub mod vehicle;
+pub mod world;
+
+pub use body::{BodyKind2, PhysicsBody2};
+pub use collision::collide;
+pub use joint::Joint2;
+pub use particles::{Particle2, ParticleBody2, ParticleKind2};
+pub use raycast::{raycast, Ray2, RayHit2};
+pub use shape::{ColliderShape2, CompoundChild, Contact2, CustomShape2, Transform2};
+pub use vehicle::Vehicle2;
+pub use world::{CharacterMoveResult, PhysicsEvent2, PhysicsWorld2};
+
 /// Euler integration step: `pos += vel * dt`.
 pub fn integrate(pos: &mut Vec2, vel: Vec2, dt: f32) {
     *pos += vel * dt;
