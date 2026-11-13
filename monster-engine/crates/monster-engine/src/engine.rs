@@ -322,6 +322,10 @@ impl Engine {
             let camera = self.camera.clone();
             self.renderer.begin(&camera);
             for draw in sprite_draw_order(&self.world) {
+                // cull sprites outside the camera viewport (+ margin)
+                if !monster_scene::sprite_in_view(draw.position, draw.size * 0.5, &camera, 64.0) {
+                    continue;
+                }
                 let Some(texture) = self.assets.texture(draw.texture) else {
                     continue;
                 };

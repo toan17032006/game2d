@@ -19,6 +19,9 @@ pub struct Gl3DRenderer {
     draw_count: u32,
     /// True once bound to a live `GlContext`; false = state-only recorder.
     bound: bool,
+    /// Compiled shader program id when the modern-GL extension functions
+    /// are available on the bound context (0 = fixed-function fallback).
+    shader_program: u32,
 }
 
 impl Gl3DRenderer {
@@ -29,6 +32,7 @@ impl Gl3DRenderer {
             clear_color: [0.08, 0.09, 0.13, 1.0],
             draw_count: 0,
             bound: false,
+            shader_program: 0,
         }
     }
 
@@ -37,7 +41,19 @@ impl Gl3DRenderer {
     pub fn bind(&mut self, context: &GlContext) {
         let _ = context;
         gl::enable_depth_test();
+        // M3 slice 3: attempt the shader pipeline; fall back to
+        // fixed-function when the extension functions are unavailable.
+        if gl::load_modern_functions() {
+            if let Ok(program) = gl::compile_program(gl::SHADER_VS, gl::SHADER_FS) {
+                self.shader_program = program;
+            }
+        }
         self.bound = true;
+    }
+
+    /// Whether the shader pipeline is active (0 = fixed-function fallback).
+    pub fn shader_program(&self) -> u32 {
+        self.shader_program
     }
 
     pub fn is_bound(&self) -> bool {
@@ -65,6 +81,10 @@ impl Renderer3D for Gl3DRenderer {
             gl::set_viewport(self.viewport.0, self.viewport.1);
             gl::clear_color_buffer(self.clear_color);
             gl::enable_depth_test();
+            if self.shader_program != 0 {
+                gl::use_program(self.shader_program);
+                gl::uniform3f(self.shader_program, "u_tint", 1.0, 1.0, 1.0);
+            }
 
             // projection: perspective frustum derived from fov/aspect
             let top = camera.near * (camera.fov_y_radians / 2.0).tan();
@@ -182,6 +202,9 @@ impl Renderer3D for Gl3DRenderer {
     }
 
     fn end(&mut self) {
+        if self.issue() && self.shader_program != 0 {
+            gl::use_program(0); // back to fixed-function
+        }
         // present is performed by the caller through GlContext::swap_buffers
     }
 

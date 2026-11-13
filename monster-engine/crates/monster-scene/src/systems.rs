@@ -6,6 +6,15 @@ use monster_core::graphics::Camera2D;
 use monster_math::Vec2;
 use monster_physics::integrate;
 
+/// Sprite culling: whether a sprite (centre + half extents) intersects the
+/// camera viewport (+ `margin` pixels of slack). Pure function — the engine
+/// render pass calls this before issuing sprite draws.
+pub fn sprite_in_view(center: Vec2, half: Vec2, camera: &Camera2D, margin: f32) -> bool {
+    let view_half = Vec2::new(camera.viewport.0, camera.viewport.1) * 0.5 + Vec2::splat(margin);
+    let delta = (center - camera.position).abs();
+    delta.x <= view_half.x + half.x && delta.y <= view_half.y + half.y
+}
+
 /// Smoothly move `camera` towards `target`'s position (+ `offset`).
 ///
 /// Frame-rate independent exponential smoothing: `factor = 1 - exp(-speed*dt)`.
@@ -105,6 +114,45 @@ mod tests {
         assert_eq!(ta.position, Vec2::new(20.0, -10.0));
         let tb = world.get::<Transform>(b).unwrap(); // no velocity: unchanged
         assert_eq!(tb.position, Vec2::new(1.0, 1.0));
+    }
+
+    #[test]
+    fn sprite_culling_by_camera_viewport() {
+        let camera = Camera2D::new(800.0, 600.0); // view half = (400, 300)
+                                                  // inside view
+        assert!(sprite_in_view(
+            Vec2::new(0.0, 0.0),
+            Vec2::splat(10.0),
+            &camera,
+            0.0
+        ));
+        // partially visible at the edge (sprite half counts)
+        assert!(sprite_in_view(
+            Vec2::new(405.0, 0.0),
+            Vec2::splat(10.0),
+            &camera,
+            0.0
+        ));
+        // fully outside
+        assert!(!sprite_in_view(
+            Vec2::new(500.0, 0.0),
+            Vec2::splat(10.0),
+            &camera,
+            0.0
+        ));
+        // margin rescues a near-edge sprite (reach = 400 + 64 + 10 = 474)
+        assert!(sprite_in_view(
+            Vec2::new(460.0, 0.0),
+            Vec2::splat(10.0),
+            &camera,
+            64.0
+        ));
+        assert!(!sprite_in_view(
+            Vec2::new(460.0, 0.0),
+            Vec2::splat(10.0),
+            &camera,
+            0.0
+        ));
     }
 
     #[test]

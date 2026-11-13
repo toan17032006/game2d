@@ -136,6 +136,15 @@ Yêu cầu hệ vật lý đầy đủ theo taxonomy người dùng đặt ra. Q
 | FR-058 | Particles 2D: `ParticleEmitter2D` (burst + continuous rate, cone spread, gravity, lifetime, color lerp) + `particle_emit_system` + engine render pass vẽ draw_rect world-space | Must | burst 8 hạt → di chuyển → chết hết sau lifetime; continuous rate 10/s sinh > 5; color lerp trắng→đen midpoint xám | monster-scene::particles2d | ✅ |
 | FR-059 | Audio playback thật: winmm FFI (`waveOut*`) + `WinmmAudioBackend` implement `AudioBackend` (mono PCM16, volume, lazy device open, reset/unprepare cleanup); thiếu device → constructor lỗi mô tả → fallback Null | Must | link winmm; construction báo device count; play/stop/stop_all state machine PASS (hoặc skip-graceful khi không device); sandbox --game dùng winmm/Null | monster-platform::winmm_audio | ✅ |
 
+## FR — M4 slice 3 + M3 slice 3 (TASK-20261114-005)
+
+| ID | Yêu cầu | Priority | Acceptance criteria | Module | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| FR-060 | Sprite culling: `sprite_in_view` (viewport camera + margin) — engine render bỏ qua sprite ngoài view | Must | trong view → true; mép (half tính vào) → true; ngoài → false; margin cứu sprite sát mép | monster-scene::systems | ✅ |
+| FR-061 | Tilemap multi-layer: 2 layer (background + foreground) trên cùng texture — entities/bodies cộng dồn, không đè vị trí | Must | 2 layer × 2 solid → 4 entity + 4 body, positions khác nhau | monster-scene::tilemap | ✅ |
+| FR-062 | M3 slice 3: extension loader (`wglGetProcAddress`, guard null từng function) + shader compile/link (GLSL 120 pass-through + `u_tint` uniform, info-log errors) + Gl3DRenderer shader path với fallback fixed-function khi functions không khả dụng | Must | loader không context → `modern_available` false → compile_program Err → Gl3DRenderer fallback; shader sources GLSL 120 pass-through | monster-platform::gl + monster-engine::gl3d | ✅ |
+| FR-062a | Music WAV: `load_wav_file` đọc + decode file WAV thành AudioClip (looped playback qua winmm đã có) | Should | fixture WAV temp file → decode khớp samples + sample_rate | monster-audio | ✅ |
+
 ## References
 
 - `/docs/02-requirements/non-functional-requirements.md`

@@ -122,6 +122,15 @@ Truy vết hai chiều: requirement → module hiện thực → test kiểm ch�
 | FR-058 | monster-scene::particles2d | `particles2d::tests::{burst_spawns_and_particles_move_and_die, continuous_rate_spawns_over_time, color_lerps_over_lifetime}` + sandbox coin sparks | PASS |
 | FR-059 | monster-platform::winmm_audio | `winmm_audio::tests::{construction_reports_device_presence, play_stop_state_machine_with_or_without_device, waveformatex_layout}` + sandbox --game audio blip (winmm/Null fallback) | PASS |
 
+## Ma trận FR M4 slice 3 + M3 slice 3 (TASK-20261114-005)
+
+| FR | Module (crate) | Test kiểm chứng | Test result |
+| --- | --- | --- | --- |
+| FR-060 | monster-scene::systems + engine render | `systems::tests::sprite_culling_by_camera_viewport` + engine render pass dùng sprite_in_view (margin 64) | PASS |
+| FR-061 | monster-scene::tilemap | `tilemap::tests::multi_layer_spawn_coexists` | PASS |
+| FR-062 | monster-platform::gl + monster-engine::gl3d | `gl.rs::modern_tests::{extension_loader_without_context_falls_back, shader_sources_are_glsl_120_pass_through, compile_program_requires_modern_gl}` + `gl3d::tests` (unbound recorder shader_program=0 fallback) | PASS |
+| FR-062a | monster-audio | `wav::tests::load_wav_file_roundtrip` | PASS |
+
 ## Quy tắc bảo trì
 
 - Mỗi FR mới MUST có ít nhất một test thật trước khi đánh dấu ✅.

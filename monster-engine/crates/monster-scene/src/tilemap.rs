@@ -111,6 +111,54 @@ mod tests {
     }
 
     #[test]
+    fn multi_layer_spawn_coexists() {
+        let mut world = World::new();
+        let mut physics = PhysicsWorld2::new(Vec2::ZERO);
+        let tex = Handle::<Texture>::from_index(0);
+        // layer 1: background solid tiles at origin
+        let layer1 = [Tile::Solid, Tile::Solid];
+        let (r1, pairs1) = spawn_tilemap(
+            &mut world,
+            &mut physics,
+            tex,
+            32.0,
+            Vec2::new(-100.0, 0.0),
+            2,
+            1,
+            &layer1,
+        );
+        // layer 2: foreground solid tiles offset to the right
+        let layer2 = [Tile::Solid, Tile::Solid];
+        let (r2, pairs2) = spawn_tilemap(
+            &mut world,
+            &mut physics,
+            tex,
+            32.0,
+            Vec2::new(500.0, 100.0),
+            2,
+            1,
+            &layer2,
+        );
+        assert_eq!(r1.solid_bodies, 2);
+        assert_eq!(r2.solid_bodies, 2);
+        assert_eq!(world.entity_count(), 4);
+        assert_eq!(physics.bodies.len(), 4);
+        // layers do not overlap positions
+        for &(_, b1) in &pairs1 {
+            for &(_, b2) in &pairs2 {
+                assert_ne!(
+                    physics.bodies[b1].transform.position, physics.bodies[b2].transform.position,
+                    "layer tiles overlapped"
+                );
+            }
+        }
+        assert!(pairs1
+            .iter()
+            .chain(pairs2.iter())
+            .all(|&(e, _)| world.is_alive(e)));
+    }
+
+    #[test]
     fn all_empty_spawns_nothing() {
         let mut world = World::new();
         let mut physics = PhysicsWorld2::new(Vec2::ZERO);

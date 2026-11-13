@@ -71,6 +71,12 @@ impl Vec2 {
         }
     }
 
+    /// Component-wise absolute value.
+    #[inline]
+    pub fn abs(self) -> Vec2 {
+        Vec2::new(self.x.abs(), self.y.abs())
+    }
+
     /// Normalize with a fallback for zero-length vectors.
     #[inline]
     pub fn normalize_or(self, fallback: Vec2) -> Vec2 {

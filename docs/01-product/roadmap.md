@@ -19,11 +19,13 @@ Lộ trình phát triển theo milestone. Mỗi milestone có đầu ra kiểm c
 | **M2.5 — Physics v2 (taxonomy đầy đủ)** | 14 loại body + 15 loại collider + joints (Distance/Pin/Weld/Spring) + `PhysicsWorld2` pipeline + raycast + Character move_and_slide + particle systems (Soft/Cloth/Fluid/Particle/Deformable) + Vehicle suspension — FR-032..FR-048 | ✅ Hoàn thành (TASK-20261113-010) |
 | **M3 — Tầng 3D** | GPU backend + camera 3D + mesh/shader | 🔶 Đang làm |
 | — M3 slice 1 ✅ | Trait `Renderer3D` + `Camera3D` (look_at/perspective) + GL legacy backend qua WGL (`GlContext`, `Gl3DRenderer`) + cube demo + ADR-002 — TASK-20261114-002 | ✅ |
-| — M3 tiếp theo | Modern GL context (extension loader + shaders), mesh loading, physics 3D (Aabb3), Engine loop 3D tích hợp | ⬜ |
+| — M3 slice 3 ✅ | Extension loader (wglGetProcAddress, null-guard) + shader pipeline (GLSL 120 compile/link/info-log) + fallback fixed-function — TASK-20261114-005 | ✅ |
+| — M3 tiếp theo | Mesh loading mở rộng (normals/UV), physics 3D (Aabb3), Engine loop 3D tích hợp | ⬜ |
 | **M4 — Feature game 2D** | Sprite animation (spritesheet Tiny Swords), tilemap, particle, text, camera follow/shake, audio playback thật, UI-less menu flow | 🔶 Đang làm |
 | — M4 slice 1 ✅ | Sprite animation (grid-slice + Animator + system) + camera follow + Tiny Swords Warrior_Run integration + coin collect mini-game (--game) — TASK-20261114-003 | ✅ |
 | — M4 slice 2 ✅ | Text HUD (bitmap font 3×5), tilemap spawn (walls), particle emitter 2D (burst/lifetime/color lerp), audio playback thật (winmm waveOut FFI, fallback Null) — TASK-20261114-004 | ✅ |
-| — M4 tiếp theo | Tilemap đầy đủ (multi-layer, culling), particle-collision, music streaming | ⬜ |
+| — M4 slice 3 ✅ | Sprite culling + tilemap multi-layer + music WAV loader (looped qua winmm) — TASK-20261114-005 | ✅ |
+| — M4 tiếp theo | True music streaming, particle-collision, text render mở rộng | ⬜ |
 | **M5 — Game hoàn chỉnh đầu tiên** | Đóng gói một game hoàn chỉnh trên asset Tiny Swords (chạy window mode, có âm thanh) | ⬜ Chưa bắt đầu |
 
 ## Chi tiết M3 (mục tiêu kế tiếp)

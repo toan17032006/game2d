@@ -7,6 +7,8 @@ use monster_core::audio::AudioClip;
 /// WAV decode failures.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum WavError {
+    /// File read failure.
+    Io(String),
     /// Missing/invalid "RIFF"/"WAVE" markers.
     NotRiff,
     /// `fmt ` chunk missing or truncated.
@@ -26,6 +28,7 @@ pub enum WavError {
 impl fmt::Display for WavError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            WavError::Io(what) => write!(f, "WAV IO failure: {what}"),
             WavError::NotRiff => write!(f, "not a RIFF/WAVE file"),
             WavError::MissingFmt => write!(f, "missing or invalid fmt chunk"),
             WavError::MissingData => write!(f, "missing or empty data chunk"),
@@ -253,6 +256,20 @@ mod tests {
             b
         };
         assert_eq!(decode_wav(&no_data), Err(WavError::MissingData));
+    }
+
+    #[test]
+    fn load_wav_file_roundtrip() {
+        let samples = vec![500i16, -500, 800, -800];
+        let bytes = build_wav(1, 44100, &samples);
+        let dir = std::env::temp_dir().join("monster_audio_tests");
+        std::fs::create_dir_all(&dir).expect("mkdir");
+        let path = dir.join("fixture.wav");
+        std::fs::write(&path, &bytes).expect("write fixture");
+        let clip = crate::load_wav_file(&path).expect("load wav file");
+        assert_eq!(clip.sample_rate, 44100);
+        assert_eq!(clip.samples, samples);
+        let _ = std::fs::remove_file(&path);
     }
 
     #[test]
