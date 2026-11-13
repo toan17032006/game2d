@@ -1,0 +1,9 @@
+[package]
+name = "monster-render"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+monster-math = { path = "../monster-math" }
+monster-core = { path = "../monster-core" }
