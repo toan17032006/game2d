@@ -1,0 +1,90 @@
+name: Agent Quality Gates
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gates:
+    name: Enforcement Quality Gates
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Repository Lint Rules
+        shell: pwsh
+        run: ./.agent/scripts/test-agent-lint.ps1
+
+      - name: Verify Markdown Links & Anchors
+        shell: pwsh
+        run: ./.agent/scripts/test-markdown-links.ps1
+
+      - name: Task Lifecycle Model Check
+        shell: pwsh
+        run: ./.agent/scripts/model-check-task-lifecycle.ps1
+
+      - name: Run Automated Regression Test Suite (CASE-001 to CASE-013)
+        shell: pwsh
+        run: ./.agent/scripts/run-regression-tests.ps1
+
+      - name: Subsystem Verification (registry invariants)
+        shell: pwsh
+        run: ./.agent/scripts/verify-subsystem.ps1 -All
+
+      - name: Run Final Quality Gates on Active/Changed Tasks
+        shell: pwsh
+        run: |
+          $repoRoot = (Get-Location).Path
+          $tasksRoot = Join-Path $repoRoot '.agent/tasks'
+
+          # Discover modified or added tasks in commit / PR
+          $changedFiles = git diff --name-only origin/main...HEAD 2>$null
+          if (-not $changedFiles) {
+              $changedFiles = git diff --name-only HEAD~1 HEAD 2>$null
+          }
+          if (-not $changedFiles) {
+              $changedFiles = git status --porcelain | ForEach-Object { if ($_.Length -gt 3) { $_.Substring(3).Trim() } }
+          }
+
+          $taskIds = [System.Collections.Generic.HashSet[string]]::new()
+          foreach ($file in $changedFiles) {
+              $m = [regex]::Match($file, '\.agent/tasks/(TASK-\d{8}-\d{3})/')
+              if ($m.Success) {
+                  [void]$taskIds.Add($m.Groups[1].Value)
+              }
+          }
+
+          # If no task was modified in the diff, run gates on the latest task
+          if ($taskIds.Count -eq 0) {
+              $latestTask = Get-ChildItem -LiteralPath $tasksRoot -Directory -Filter 'TASK-*' |
+                  Sort-Object -Property Name -Descending |
+                  Select-Object -First 1
+              if ($latestTask) {
+                  [void]$taskIds.Add($latestTask.Name)
+              }
+          }
+
+          Write-Output "Running quality gates for tasks: $($taskIds -join ', ')"
+          foreach ($id in $taskIds) {
+              Write-Output "--- Testing $id ---"
+              ./.agent/scripts/run-quality-gates.ps1 -TaskId $id -Mode final
+              if ($LASTEXITCODE -ne 0) {
+                  Write-Error "Quality gates failed for $id"
+                  exit 1
+              }
+          }
+
+      - name: Git Diff & Whitespace Check
+        shell: pwsh
+        run: |
+          # Generated evidence logs contain tabular padding, not source defects.
+          git diff --check -- . ':(exclude,glob).agent/tasks/*/logs/*'

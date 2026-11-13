@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "note": "Tasks that predate the mandatory product verification declaration. Entries expire and must be removed, not extended. Any task created after 2026-11-13 must declare '## Test Command' or '## Product Verification: not-applicable' with a reason.",
+  "exemptions": [
+    {
+      "taskId": "TASK-20261113-002",
+      "reason": "Predates the product verification requirement; documentation task verified by the Markdown link checker.",
+      "reviewBy": "2027-02-01"
+    },
+    {
+      "taskId": "TASK-20261113-003",
+      "reason": "Predates the product verification requirement; verified by the regression suite at that time.",
+      "reviewBy": "2027-02-01"
+    },
+    {
+      "taskId": "TASK-20261113-004",
+      "reason": "Predates the product verification requirement; verified by the regression suite at that time.",
+      "reviewBy": "2027-02-01"
+    },
+    {
+      "taskId": "TASK-20261113-005",
+      "reason": "Predates the product verification requirement; verified by the regression suite at that time.",
+      "reviewBy": "2027-02-01"
+    }
+  ]
+}

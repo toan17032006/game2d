@@ -1,0 +1,13 @@
+﻿{
+    "taskId":  "TASK-20261113-007",
+    "generatedAt":  "2026-11-13T21:49:33+07:00",
+    "status":  "VERIFIED",
+    "policy":  "command",
+    "command":  "powershell -NoProfile -ExecutionPolicy Bypass -File .agent/scripts/run-regression-tests.ps1",
+    "exitCode":  0,
+    "durationSeconds":  8.31,
+    "failures":  [
+
+                 ],
+    "logPath":  ".agent/tasks/TASK-20261113-007/logs/test-execution.log"
+}

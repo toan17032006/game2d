@@ -1,0 +1,35 @@
+﻿[2026-11-13 21:46:47] Starting product verification for TASK-20261113-006
+[2026-11-13 21:46:47] PASS: Syntax OK for check-doc-boundaries.ps1
+[2026-11-13 21:46:47] PASS: Syntax OK for invoke-hook.ps1
+[2026-11-13 21:46:47] PASS: Syntax OK for model-check-task-lifecycle.ps1
+[2026-11-13 21:46:47] PASS: Syntax OK for run-quality-gates.ps1
+[2026-11-13 21:46:47] PASS: Syntax OK for run-regression-tests.ps1
+[2026-11-13 21:46:47] PASS: Syntax OK for test-agent-lint.ps1
+[2026-11-13 21:46:47] PASS: Syntax OK for test-markdown-links.ps1
+[2026-11-13 21:46:47] PASS: Syntax OK for validate-task.ps1
+[2026-11-13 21:46:47] PASS: Syntax OK for verify-product.ps1
+[2026-11-13 21:46:47] PASS: Syntax OK for verify-subsystem.ps1
+[2026-11-13 21:46:47] PASS: Syntax OK for verify-task.ps1
+[2026-11-13 21:46:47] PASS: Syntax OK for agent-runtime.ps1
+[2026-11-13 21:46:47] PASS: Markdown links verified
+[2026-11-13 21:46:47]   PASS: Markdown links check
+[2026-11-13 21:46:47] Declared product verification command: powershell -NoProfile -ExecutionPolicy Bypass -File .agent/scripts/run-regression-tests.ps1
+[2026-11-13 21:46:56]   === Regression Test Results ===
+[2026-11-13 21:46:56]   CaseId   ExpectedExit ActualExit Result Description
+[2026-11-13 21:46:56]   ------   ------------ ---------- ------ -----------
+[2026-11-13 21:46:56]   CASE-001            1          1 PASS   Missing required task file (spec.md) fails validator
+[2026-11-13 21:46:56]   CASE-002            1          1 PASS   Missing acceptance evidence fails verifier
+[2026-11-13 21:46:56]   CASE-003            1          1 PASS   Missing evaluation dimension fails verifier
+[2026-11-13 21:46:56]   CASE-004            1          1 PASS   Missing command evidence fails verifier
+[2026-11-13 21:46:56]   CASE-005            0          0 PASS   Compliant task passes final quality gates
+[2026-11-13 21:46:56]   CASE-006            1          1 PASS   Unauthorized doc edit fails boundary check
+[2026-11-13 21:46:56]   CASE-007            1          1 PASS   Broken markdown link fails link checker
+[2026-11-13 21:46:56]   CASE-008            1          1 PASS   Missing product verification declaration fails product harness
+[2026-11-13 21:46:56]   CASE-009            0          0 PASS   Explicit not-applicable declaration records SKIPPED evidence
+[2026-11-13 21:46:56]   CASE-010            1          1 PASS   Failing product command fails product harness
+[2026-11-13 21:46:56]   CASE-011            0          0 PASS   Noisy git stderr does not fail the boundary check
+[2026-11-13 21:46:56]   CASE-012            1          1 PASS   Lint rejects unguarded native git invocations
+[2026-11-13 21:46:56]   CASE-013            0          0 PASS   Lifecycle model check passes with all invariants
+[2026-11-13 21:46:56]   PASS: All 13 selected regression test cases passed.
+[2026-11-13 21:46:56] PASS: Product verification command succeeded (exit code 0, 8.23 s)
+[2026-11-13 21:46:56] Product verification status: VERIFIED

@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "owner": "engineering-enablement",
+  "reviewBy": "2027-05-13",
+  "note": "Each invariant must map to a runnable check. An invariant without a check is documentation, not verification.",
+  "subsystems": [
+    {
+      "id": "documentation-boundary",
+      "owner": "engineering-enablement",
+      "invariants": [
+        {
+          "id": "INV-DOC-001",
+          "statement": "Unauthorized project Markdown changes fail the boundary check.",
+          "check": "powershell -NoProfile -ExecutionPolicy Bypass -File .agent/scripts/run-regression-tests.ps1 -Case CASE-006"
+        },
+        {
+          "id": "INV-DOC-002",
+          "statement": "Noisy git diagnostics on stderr never become a false boundary failure.",
+          "check": "powershell -NoProfile -ExecutionPolicy Bypass -File .agent/scripts/run-regression-tests.ps1 -Case CASE-011"
+        }
+      ]
+    },
+    {
+      "id": "agent-orchestration",
+      "owner": "engineering-enablement",
+      "invariants": [
+        {
+          "id": "INV-ORCH-001",
+          "statement": "A task workspace missing a required artifact fails preflight validation.",
+          "check": "powershell -NoProfile -ExecutionPolicy Bypass -File .agent/scripts/run-regression-tests.ps1 -Case CASE-001"
+        },
+        {
+          "id": "INV-ORCH-002",
+          "statement": "Acceptance criteria without evidence fail the independent verifier.",
+          "check": "powershell -NoProfile -ExecutionPolicy Bypass -File .agent/scripts/run-regression-tests.ps1 -Case CASE-002"
+        },
+        {
+          "id": "INV-ORCH-003",
+          "statement": "A scored evaluation missing a core dimension fails the verifier.",
+          "check": "powershell -NoProfile -ExecutionPolicy Bypass -File .agent/scripts/run-regression-tests.ps1 -Case CASE-003"
+        },
+        {
+          "id": "INV-ORCH-004",
+          "statement": "A completed task without command evidence fails the verifier.",
+          "check": "powershell -NoProfile -ExecutionPolicy Bypass -File .agent/scripts/run-regression-tests.ps1 -Case CASE-004"
+        },
+        {
+          "id": "INV-ORCH-005",
+          "statement": "A compliant task passes the full final quality gate chain.",
+          "check": "powershell -NoProfile -ExecutionPolicy Bypass -File .agent/scripts/run-regression-tests.ps1 -Case CASE-005"
+        },
+        {
+          "id": "INV-ORCH-006",
+          "statement": "A task without a declared product verification command cannot pass the product harness.",
+          "check": "powershell -NoProfile -ExecutionPolicy Bypass -File .agent/scripts/run-regression-tests.ps1 -Case CASE-008"
+        },
+        {
+          "id": "INV-ORCH-007",
+          "statement": "A failing product command fails the product harness even when the task structure is valid.",
+          "check": "powershell -NoProfile -ExecutionPolicy Bypass -File .agent/scripts/run-regression-tests.ps1 -Case CASE-010"
+        },
+        {
+          "id": "INV-ORCH-008",
+          "statement": "Recurring failure modes are enforced as repository lint rules.",
+          "check": "powershell -NoProfile -ExecutionPolicy Bypass -File .agent/scripts/run-regression-tests.ps1 -Case CASE-012"
+        }
+      ]
+    },
+    {
+      "id": "task-lifecycle",
+      "owner": "engineering-enablement",
+      "invariants": [
+        {
+          "id": "INV-LIFE-001",
+          "statement": "COMPLETED is unreachable without every gate, in order, and replay rejects shortcuts.",
+          "check": "powershell -NoProfile -ExecutionPolicy Bypass -File .agent/scripts/model-check-task-lifecycle.ps1"
+        }
+      ]
+    }
+  ]
+}
