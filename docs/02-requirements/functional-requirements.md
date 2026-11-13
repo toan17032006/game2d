@@ -145,6 +145,12 @@ Yêu cầu hệ vật lý đầy đủ theo taxonomy người dùng đặt ra. Q
 | FR-062 | M3 slice 3: extension loader (`wglGetProcAddress`, guard null từng function) + shader compile/link (GLSL 120 pass-through + `u_tint` uniform, info-log errors) + Gl3DRenderer shader path với fallback fixed-function khi functions không khả dụng | Must | loader không context → `modern_available` false → compile_program Err → Gl3DRenderer fallback; shader sources GLSL 120 pass-through | monster-platform::gl + monster-engine::gl3d | ✅ |
 | FR-062a | Music WAV: `load_wav_file` đọc + decode file WAV thành AudioClip (looped playback qua winmm đã có) | Should | fixture WAV temp file → decode khớp samples + sample_rate | monster-audio | ✅ |
 
+## FR — Kiến trúc tách game/engine (TASK-20261114-007)
+
+| ID | Yêu cầu | Priority | Acceptance criteria | Module | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| FR-066 | Game tách hoàn toàn khỏi engine: `/game/` binary crate phụ thuộc `monster-engine` path dependency; engine facade KHÔNG chứa game logic (không GamePhase, không coin collect, không level flow); game import qua prelude-only | Must | `cargo build` từ /game/ exit 0; `cargo run -- --headless 120 --game` exit 0; engine tests 205 PASS không regression; engine src không chứa GamePhase/sandbox | /game/ + /monster-engine/ | ✅ |
+
 ## References
 
 - `/docs/02-requirements/non-functional-requirements.md`

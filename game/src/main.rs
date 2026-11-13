@@ -559,7 +559,7 @@ impl GameApp for SandboxGame {
                 for event in physics.drain_events() {
                     if matches!(
                         event,
-                        monster_physics::world::PhysicsEvent2::TriggerEntered { .. }
+                        PhysicsEvent2::TriggerEntered { .. }
                     ) {
                         self.trigger_events += 1;
                     }
@@ -693,7 +693,7 @@ fn main() {
 
     // audio: real playback (winmm) in window/game mode; Null headless
     let audio_backend: Box<dyn AudioBackend> = if open_window || game_mode {
-        match monster_platform::WinmmAudioBackend::new() {
+        match WinmmAudioBackend::new() {
             Ok(b) => Box::new(b),
             Err(e) => {
                 log_warn!("winmm unavailable ({e}) — using Null audio");

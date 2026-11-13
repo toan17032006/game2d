@@ -131,6 +131,12 @@ Truy vết hai chiều: requirement → module hiện thực → test kiểm ch�
 | FR-062 | monster-platform::gl + monster-engine::gl3d | `gl.rs::modern_tests::{extension_loader_without_context_falls_back, shader_sources_are_glsl_120_pass_through, compile_program_requires_modern_gl}` + `gl3d::tests` (unbound recorder shader_program=0 fallback) | PASS |
 | FR-062a | monster-audio | `wav::tests::load_wav_file_roundtrip` | PASS |
 
+## Ma trận FR Kiến trúc tách game (TASK-20261114-007)
+
+| FR | Module (crate) | Test kiểm chứng | Test result |
+| --- | --- | --- | --- |
+| FR-066 | /game/ + /monster-engine/ | `game/` cargo build exit 0 + `--headless 120 --game` exit 0 + engine tests 205 PASS không regression | PASS |
+
 ## Quy tắc bảo trì
 
 - Mỗi FR mới MUST có ít nhất một test thật trước khi đánh dấu ✅.

@@ -13,8 +13,8 @@ Xác định biên của `monster-engine` trong hệ thống: ai tương tác, g
 
 ```
 ┌─────────────────────────┐
-│  Game code (sandbox,    │  viết bằng Rust, dùng API facade
-│  game thật sau này)     │
+│  /game/ (monster-game   │  binary crate riêng, import engine
+│  crate)                 │  qua path dependency
 └───────────┬─────────────┘
             │ crate `monster-engine` (facade: EngineBuilder, GameApp, prelude)
             ▼

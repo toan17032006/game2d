@@ -58,7 +58,7 @@ pub mod prelude {
     pub use monster_math::{Color, Mat4, Quat, Rect, Vec2, Vec3, Vec4};
     pub use monster_physics::{
         bounce, find_collisions, integrate, Aabb2, BodyKind2, ColliderShape2, CollisionPair,
-        PhysicsBody2, PhysicsWorld2,
+        PhysicsBody2, PhysicsEvent2, PhysicsWorld2,
     };
     pub use monster_platform::WinmmAudioBackend;
     pub use monster_platform::{NullWindow, PlatformWindow, Window, WindowOptions};
