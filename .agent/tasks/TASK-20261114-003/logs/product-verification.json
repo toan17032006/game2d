@@ -1,0 +1,13 @@
+﻿{
+    "taskId":  "TASK-20261114-003",
+    "generatedAt":  "2026-11-14T01:00:30+07:00",
+    "status":  "VERIFIED",
+    "policy":  "command",
+    "command":  "powershell -NoProfile -ExecutionPolicy Bypass -File .agent/tasks/TASK-20261114-003/scripts/run-headless-autodrive.ps1",
+    "exitCode":  0,
+    "durationSeconds":  20.39,
+    "failures":  [
+
+                 ],
+    "logPath":  ".agent/tasks/TASK-20261114-003/logs/test-execution.log"
+}

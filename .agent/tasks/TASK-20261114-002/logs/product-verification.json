@@ -1,0 +1,13 @@
+﻿{
+    "taskId":  "TASK-20261114-002",
+    "generatedAt":  "2026-11-14T00:34:27+07:00",
+    "status":  "VERIFIED",
+    "policy":  "command",
+    "command":  "powershell -NoProfile -ExecutionPolicy Bypass -File .agent/tasks/TASK-20261114-002/scripts/run-headless.ps1 -Frames 120",
+    "exitCode":  0,
+    "durationSeconds":  53.24,
+    "failures":  [
+
+                 ],
+    "logPath":  ".agent/tasks/TASK-20261114-002/logs/test-execution.log"
+}

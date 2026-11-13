@@ -1,0 +1,13 @@
+[package]
+name = "game"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Tiny Swords demo game on monster-engine: extracted asset set + data-driven scene"
+
+[dependencies]
+monster-engine = { path = "../monster-engine/crates/monster-engine" }
+
+[[bin]]
+name = "tiny-swords"
+path = "src/main.rs"
